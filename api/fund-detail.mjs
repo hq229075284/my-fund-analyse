@@ -2,19 +2,20 @@ import axios from 'axios'
 import chalk from 'chalk'
 import dayjs from 'dayjs'
 
-function getDateRange(...args) {
+export function getDateRange(...args) {
   //  'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'month' | 'year' | 'week'
   const endDate = dayjs().hour(0).minute(0).second(0).millisecond(0).valueOf()
   const startDate = dayjs().subtract(...args).hour(0).minute(0).second(0).millisecond(0).valueOf()
   return { startDate, endDate }
 }
-function getChartData(fundCode) {
+
+export async function getChartData(fundCode) {
   if (!fundCode) {
     console.log(chalk.red('缺失需要查询的基金编码'))
     return
   }
-  axios({
-    url: `http://fund.eastmoney.com/pingzhongdata/${fundCode}.js?v=${20230309183305}`,
+  const dataAfterHandle = await axios({
+    url: `http://fund.eastmoney.com/pingzhongdata/${fundCode}.js?v=${dayjs().format('YYYYMMDDHHmmss')}`,
     method: 'get',
     params: {},
     headers: {
@@ -55,38 +56,44 @@ function getChartData(fundCode) {
         },
         sort.reduce((prev, args) => {
         // eslint-disable-next-line no-param-reassign
-          prev[args.join('')] = {
+          prev[args[2]] = {
             ...getDateRange(...args.slice(0, 2)),
             collection: [],
             description: args[2],
           }
           return prev
-        }, {}),
+        }, { fundCode }),
       )
 
-      console.log(fundCode)
-      console.table(
-        Object.entries(chartData).map(([key, item]) => ({
-          描述: item.description,
-          最新净值: item.collection[item.collection.length - 1].y,
-          最大净值: item.max,
-          最小净值: item.min,
-          当日所在范围内的当前百分点: `${(item.collection[item.collection.length - 1].y - item.min) / (item.max - item.min) * 100}%`,
-        })),
-      )
+      const excludes = ['fundCode']
+      Object.entries(chartData).forEach(([key, item]) => {
+        if (excludes.includes(key)) return
+        // if (fundCode === '006933' && key === '近1年') debugger
+        item.currentPercent = (item.collection[item.collection.length - 1].y - item.min) / (item.max - item.min) * 100
+      })
 
-      // console.table(Object.entries(chartData).reduce((prev, [key, item]) => {
-      //   console.log('--------------------')
-      //   console.log(`|${item.description}`)
-      //   console.log(
-      //     chalk.red(`|最大净值: ${item.max}`),
-      //     chalk.green(`|最小净值： ${item.min}`),
-      //     chalk.black(`|最新净值：${item.collection[item.collection.length - 1].y}`),
-      //   )
-      //   console.log(chalk.greenBright(`|${item.description}内，当日所处百分点：${(item.collection[item.collection.length - 1].y - item.min) / (item.max - item.min) * 100}%`))
-      //   console.log('--------------------')
-      // }), {})
+      return chartData
     })
+
+  return dataAfterHandle
 }
 
-getChartData('675093')
+export async function output(fundCode) {
+  const chartData = await getChartData(fundCode)
+  if (!chartData) {
+    console.log(chalk.red(`该基金数据获取失败：${fundCode}`))
+    return
+  }
+  console.log(fundCode)
+  console.table(
+    Object.entries(chartData).map(([key, item]) => ({
+      描述: item.description,
+      最新净值: item.collection[item.collection.length - 1].y,
+      最大净值: item.max,
+      最小净值: item.min,
+      当日所在范围内的当前百分点: `${item.currentPercent}%`,
+    })),
+  )
+}
+
+// output('675093')
