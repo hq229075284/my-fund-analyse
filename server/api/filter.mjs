@@ -1,7 +1,7 @@
 import { getChartData } from './fund-detail.mjs'
-import { getFundList } from './bond-trade-fund.mjs';
+import { getFundList } from './bond-trade-fund.mjs'
 
-(async function () {
+export async function filter() {
   let list = await getFundList({
     customFilter(row) {
       return row['近1月(%)'] < 0
@@ -25,10 +25,15 @@ import { getFundList } from './bond-trade-fund.mjs';
     return prev
   }, {})
 
-  list = list.filter((row) => !!results[row['基金编码']]).sort((a, b) => results[a['基金编码']]['近1年'].currentPercent - results[b['基金编码']]['近1年'].currentPercent)
+  list = list.filter((row) => !!results[row['基金编码']])
+    .sort((a, b) => results[a['基金编码']]['近1年'].currentPercent - results[b['基金编码']]['近1年'].currentPercent)
+    .map((row) => ({
+      ...row,
+      '近一年范围内，当前净值百分点': `${results[row['基金编码']]['近1年'].currentPercent}%`,
+    }))
 
-  console.table(list.map((row) => ({
-    ...row,
-    '近一年范围内，当前净值百分点': `${results[row['基金编码']]['近1年'].currentPercent}%`,
-  })))
-}())
+  // console.table(list)
+  // console.log('end')
+
+  return list
+}
