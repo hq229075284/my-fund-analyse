@@ -23,7 +23,7 @@ export async function logToFileWithTableForm(source, filePath) {
   //   })
   const tableData = await filter()
   console.table(tableData)
-  // exportExcel(tableData)
+  exportExcel(tableData)
 }
 
 logToFileWithTableForm()

@@ -12,6 +12,9 @@ module.exports = function exportExcel(rows) {
   wscols[wscols.length - 1] = { wpx: 300 }
   worksheet['!cols'] = wscols
 
+  // 指定创建表格的数据范围，附带排序和筛选功能
+  worksheet['!autofilter'] = { ref: `A1:${(wscols.length + 9).toString(36).toUpperCase() + rows.length}` }
+
   const workbook = XLSX.utils.book_new()
 
   XLSX.utils.book_append_sheet(workbook, worksheet, '数据')
