@@ -2,7 +2,7 @@
 // const process = require( 'node:process')
 // const { spawn } = require('node:child_process')
 import exportExcel from './excel.js'
-import { filter } from '../api/filter.mjs'
+import { filter } from '../api/index.mjs'
 
 export async function logToFileWithTableForm(source, filePath) {
 //   const writeStream = fs.createWriteStream('output.txt')
@@ -21,7 +21,9 @@ export async function logToFileWithTableForm(source, filePath) {
   //   childProcess.stdout.on('data', (data) => {
   //     writeStream.write(data)
   //   })
-  exportExcel(await filter())
+  const tableData = await filter()
+  console.table(tableData)
+  // exportExcel(tableData)
 }
 
 logToFileWithTableForm()

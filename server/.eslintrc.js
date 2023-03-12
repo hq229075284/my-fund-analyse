@@ -1,5 +1,6 @@
 module.exports = {
   env: {
+    browser: true,
     es2020: true,
     node: true,
     jest: true,
@@ -29,6 +30,7 @@ module.exports = {
     'no-mixed-operators': 'off',
     'consistent-return': 'off',
     'import/prefer-default-export': 'off',
+    'prefer-destructuring': 'off',
     // 'linebreak-style': ['error', 'windows'],
   },
 }
