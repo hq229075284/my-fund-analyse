@@ -31,6 +31,7 @@ module.exports = {
     'consistent-return': 'off',
     'import/prefer-default-export': 'off',
     'prefer-destructuring': 'off',
+    'linebreak-style': 'off',
     // 'linebreak-style': ['error', 'windows'],
   },
 }
