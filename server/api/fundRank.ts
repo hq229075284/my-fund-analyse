@@ -1,5 +1,5 @@
 import axios from 'axios'
-import log from '../utils/log.js'
+import log from '../utils/log'
 
 enum nameMap {
   'Z' = '近1周',

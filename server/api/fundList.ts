@@ -1,5 +1,5 @@
 import axios from 'axios'
-import log from '../utils/log.js'
+import log from '../utils/log'
 
 export interface IRowOfFundList {
   '基金编码':string
@@ -128,7 +128,7 @@ interface IFilterParams{
   limit?:number
 }
 
-export async function filter({ requestParams = {}, limit = 100 }:IFilterParams = {}) {
+export async function filter({ requestParams = {}, limit = 100000 }:IFilterParams = {}) {
   const list = await axios({
     method: 'get',
     url: 'https://fundapi.eastmoney.com/fundtradenew.aspx',

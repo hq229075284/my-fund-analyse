@@ -1,5 +1,5 @@
 import axios from 'axios'
-import log from '../utils/log.js'
+import log from '../utils/log'
 
 interface Ishfl{
   fl:string,

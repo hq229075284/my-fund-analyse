@@ -1,6 +1,6 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
-import log from '../utils/log.js'
+import log from '../utils/log'
 
 export function getDateRange(value:number, unit:dayjs.ManipulateType) {
   const endDate = dayjs().hour(0).minute(0).second(0).millisecond(0).valueOf()
@@ -78,9 +78,9 @@ export async function getChartData(fundCode:string) {
             ...getDateRange(...item.range),
             collection: [] as {x: number; y: number;}[],
             description: item.key,
-            max:0,
-            min:Infinity,
-            currentPercent:0
+            max: 0,
+            min: Infinity,
+            currentPercent: 0,
           }
           return prev
         }, { fundCode } as IClassifiedFund),
