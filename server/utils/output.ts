@@ -21,9 +21,9 @@ export async function logToFileWithTableForm(source, filePath) {
   //   childProcess.stdout.on('data', (data) => {
   //     writeStream.write(data)
   //   })
-  const tableData = await filter()
-  console.table(tableData)
-  exportExcel(tableData)
+  await filter()
+  // const tableData =
+  // exportExcel(tableData)
 }
 
 // @ts-ignore

@@ -1,23 +1,53 @@
 const XLSX = require('xlsx')
 const path = require('node:path')
+const dayjs = require('dayjs')
+const { mkdirp } = require('mkdirp')
 
-module.exports = function exportExcel(rows) {
-  if (!rows?.length) return
+class Excel {
+  constructor(options) {
+    this.filePath = options.filePath
+    this.workbook = XLSX.utils.book_new()
+    this.sheetId = 1
+  }
 
-  const worksheet = XLSX.utils.json_to_sheet(rows)
+  addSheet({
+    sheetName,
+    rows = [],
+  } = {}) {
+    if (!rows?.length) return
 
-  // https://git.sheetjs.com/sheetjs/sheetjs/src/branch/master/tests/write.js#L21
-  const wscols = new Array(Object.keys(rows[0]).length).fill(undefined)
-  wscols[1] = { wpx: 200 }
-  wscols[wscols.length - 1] = { wpx: 300 }
-  worksheet['!cols'] = wscols
+    sheetName = sheetName || `sheet${sheetId++}`
 
-  // 指定创建表格的数据范围，附带排序和筛选功能
-  worksheet['!autofilter'] = { ref: `A1:${(wscols.length + 9).toString(36).toUpperCase() + rows.length}` }
+    const worksheet = XLSX.utils.json_to_sheet(rows)
 
-  const workbook = XLSX.utils.book_new()
+    // https://git.sheetjs.com/sheetjs/sheetjs/src/branch/master/tests/write.js#L21
+    const wscols = new Array(Object.keys(rows[0]).length).fill({ wpx: 100 })
+    // wscols[1] = { wpx: 200 }
+    // wscols[wscols.length - 1] = { wpx: 300 }
+    worksheet['!cols'] = wscols
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, '数据')
+    // 指定创建表格的数据范围，附带排序和筛选功能
+    worksheet['!autofilter'] = { ref: `A1:${(wscols.length + 9).toString(36).toUpperCase() + rows.length}` }
 
-  XLSX.writeFile(workbook, path.resolve(__dirname, 'output.xlsx'))
+    XLSX.utils.book_append_sheet(this.workbook, worksheet, sheetName)
+  }
+
+  done() {
+    XLSX.writeFile(this.workbook, this.filePath)
+  }
 }
+
+function createExcel(
+  filePath = path.resolve(__dirname, `../xlsx/${dayjs().format('YYYY-MM-DD HH:mm:ss')}.xlsx`),
+) {
+  mkdirp.sync(path.dirname(filePath))
+  return new Excel({
+    filePath,
+  })
+}
+
+module.exports = createExcel
+
+// const excel = createExcel()
+// excel.addSheet({ sheetName: 'a23', rows: [{ x: 1, y: 2 }] })
+// excel.done()
