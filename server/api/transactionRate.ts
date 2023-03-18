@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { retry } from '../utils/common'
 import log from '../utils/log'
 
 interface Ishfl{
@@ -66,6 +67,7 @@ function getFrontEndRedemptionRate(source:Ishfl[]) {
 }
 
 export async function getTransactionRate(fundCode:string) {
+  let r:IRateAtRedemptionWithFrontEnd
   const fundid = await axios({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     method: 'get',
@@ -73,9 +75,14 @@ export async function getTransactionRate(fundCode:string) {
       method: 'querycpxqv4',
       zqdm: fundCode,
     },
-  }).then((response) => response.data.content.fundid)
+  }).then((response) => response.data.content?.fundid)
 
-  const r = await axios({
+  if (!fundid) {
+    r = { 前端赎回费率: [] }
+    return r
+  }
+
+  r = await axios({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     params: {
       method: 'queryjyxxv4',
@@ -93,6 +100,17 @@ export async function getTransactionRate(fundCode:string) {
     }
     return result
   })
+  return r
+}
+
+export async function getTransactionRateWithTry(fundCode:string) {
+  const r = await retry(
+    () => getTransactionRate(fundCode),
+    {
+      tryId: fundCode,
+      defaultValue: { 前端赎回费率: [] },
+    },
+  )
   return r
 }
 
@@ -136,3 +154,12 @@ export async function getTransactionRate(fundCode:string) {
 // }
 
 // doFilter()
+
+export async function getTransactionRateList(fundCodes:string[]) {
+  const result = [] as IRateAtRedemptionWithFrontEnd[]
+  for (let i = 0; i < fundCodes.length; i += 1) {
+    const code = fundCodes[i]
+    result.push(await getTransactionRateWithTry(code))
+  }
+  return result
+}

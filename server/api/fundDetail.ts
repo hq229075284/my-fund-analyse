@@ -1,5 +1,6 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
+import { retry } from '../utils/common'
 import log from '../utils/log'
 
 export function getDateRange(value:number, unit:dayjs.ManipulateType) {
@@ -34,6 +35,7 @@ export async function getChartData(fundCode:string) {
     url: `http://fund.eastmoney.com/pingzhongdata/${fundCode}.js?v=${dayjs().format('YYYYMMDDHHmmss')}`,
     method: 'get',
     params: {},
+    timeout: 10 * 1000,
     headers: {
       Referer: 'http://fund.eastmoney.com/',
     },
@@ -88,7 +90,11 @@ export async function getChartData(fundCode:string) {
 
       Object.entries(chartData).forEach(([key, item]) => {
         if (typeof item === 'string') return
-        item.currentPercent = (item.collection[item.collection.length - 1].y - item.min) / (item.max - item.min) * 100
+        try {
+          item.currentPercent = (item.collection[item.collection.length - 1].y - item.min) / (item.max - item.min) * 100
+        } catch {
+          item.currentPercent = 0
+        }
       })
 
       return chartData
@@ -98,24 +104,59 @@ export async function getChartData(fundCode:string) {
 }
 
 export async function getDetail(fundCode) {
-  try {
-    const chartData = await getChartData(fundCode)
-
-    // log.table(Object.entries(chartData).map(([key, item]) => {
-    //   if (typeof item === 'string') return ''
-    //   return {
-    //     描述: item.description,
-    //     最新净值: item.collection[item.collection.length - 1].y,
-    //     最大净值: item.max,
-    //     最小净值: item.min,
-    //     当日所在范围内的当前百分点: `${item.currentPercent}%`,
+  // let chartData
+  // try {
+  //   chartData = await getChartData(fundCode)
+  // } catch (e) {
+  //   console.log(e)
+  // }
+  const chartData = await retry(
+    () => getChartData(fundCode),
+    // async () => {
+    //   if (fundCode === '014858') {
+    //     try {
+    //       return getChartData(fundCode)
+    //     } catch (e) {
+    //       console.log(e)
+    //       throw e
+    //     }
+    //   } else {
+    //     return getChartData(fundCode)
     //   }
-    // }))
+    // },
+  )
+  // try {
+  //   const chartData = await getChartData(fundCode)
 
-    return chartData
-  } catch (e) {
+  //   // log.table(Object.entries(chartData).map(([key, item]) => {
+  //   //   if (typeof item === 'string') return ''
+  //   //   return {
+  //   //     描述: item.description,
+  //   //     最新净值: item.collection[item.collection.length - 1].y,
+  //   //     最大净值: item.max,
+  //   //     最小净值: item.min,
+  //   //     当日所在范围内的当前百分点: `${item.currentPercent}%`,
+  //   //   }
+  //   // }))
+
+  //   return chartData
+  // } catch (e) {
+  //   log.error(`该基金详情数据获取失败：${fundCode}`)
+  // }
+  if (!chartData) {
     log.error(`该基金详情数据获取失败：${fundCode}`)
   }
+  return chartData
 }
 
 // getDetail('675093')
+
+export async function getDetails(fundCodes:string[]) {
+  const result = [] as IClassifiedFund[]
+  for (let i = 0; i < fundCodes.length; i += 1) {
+    const code = fundCodes[i]
+    result.push(await getDetail(code))
+    // console.log(`resolve ${i}`)
+  }
+  return result
+}

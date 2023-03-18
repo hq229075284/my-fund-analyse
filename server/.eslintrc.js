@@ -33,6 +33,7 @@ module.exports = {
     'prefer-destructuring': 'off',
     'import/extensions': 'off',
     'linebreak-style': 'off',
+    'no-await-in-loop': 'off',
     // 'linebreak-style': ['error', 'windows'],
   },
   overrides: [

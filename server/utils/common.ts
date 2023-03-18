@@ -38,7 +38,32 @@ export async function useCache<T = any>(
     return result
   }
   /* use cache */
-  log.info('使用缓存')
+  log.info(`使用缓存=>${cachePath}`)
   const result = JSON.parse(fs.readFileSync(cachePath, { encoding: 'utf-8' }))
   return result
+}
+
+type retryOption={
+  tryCount?:number
+  tryId?:string
+  defaultValue?:any
+}
+export async function retry<T = any>(
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  cacheFn:(...arg:any[])=> T,
+  { tryCount = 5, tryId, defaultValue = null }:retryOption = {},
+):Promise<Awaited<T>> {
+  let time = 1
+  while (time <= tryCount) {
+    try {
+      return await cacheFn()
+    } catch (e) {
+      /*  */
+    }
+    time += 1
+  }
+  if (tryId) {
+    log.error(`retry fail,${tryId}`)
+  }
+  return defaultValue
 }

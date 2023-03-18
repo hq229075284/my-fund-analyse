@@ -66,7 +66,7 @@ const Row = (function Row(itemStr:string) {
   return this
 } as unknown as IRowOfFundListConstructor)
 
-interface IFilterParams{
+export interface IFilterParams{
   requestParams?:{
     /**
      * 类型
@@ -186,9 +186,9 @@ export async function filter({ requestParams = {}, limit = 100000 }:IFilterParam
   return list
 }
 
-export async function getFundList() {
+export async function getFundList(...args:Parameters<typeof filter>) {
   try {
-    const list = await filter()
+    const list = await filter(...args)
     return list
   } catch (e) {
     log.error(e.message)

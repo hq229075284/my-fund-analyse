@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import axios from 'axios'
 import log from '../utils/log'
-import { getDetail } from './fundDetailForZhaoShang'
+// import { getDetail } from './fundDetailForZhaoShang'
 
 export interface IRowOfFundListForZhaoShang {
   '基金编码':string
