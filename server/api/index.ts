@@ -7,10 +7,11 @@ import { getTransactionRate, IRateAtRedemptionWithFrontEnd } from './transaction
 import { listFilter, detailFilter, transactionRateFilter } from '../config/process'
 import log from '../utils/log'
 import createExcel from '../utils/excel'
+import { getRankByGroup } from './fundRank'
+import { useCache } from '../utils/common'
+import { writeToMd } from '../utils/md'
 
 export async function filter() {
-  // const filePath = path.resolve(__dirname, `../xlsx/${dayjs().format('YYYY-MM-DD HH:mm:ss')}.xlsx`)
-
   const excel = createExcel()
 
   // 获取符合条件的基金列表
@@ -25,16 +26,36 @@ export async function filter() {
   excel.addSheet({ sheetName: '天天基金', rows: list })
 
   // tlph 近1个月同类业绩排行榜前1/4
-  const refList = await getFundListForZhaoShang({ requestParams: { tlph: '1' } })
+  // const refList = await getFundListForZhaoShang({ requestParams: { tlph: '1' } })
+  const refList = await useCache(
+    () => getFundListForZhaoShang(),
+    {
+      cacheName: `招商基金${dayjs().format('YYYY-MM-DD 21:00:00')}`,
+    },
+  )
   log.info(`招商可购买基金数据${refList.length}条`)
   excel.addSheet({ sheetName: '招商证券', rows: refList })
 
   list = list.filter((item) => refList.find((ref) => ref['基金编码'] === item['基金编码']))
   log.info(`根据招商数据，过滤天天基金数据，得出可购买的基金数据${refList.length}条`)
 
+  let rankList = await useCache(
+    () => getRankByGroup(list.map((l) => l['基金编码'])),
+    {
+      cacheName: `排名数据${dayjs().format('YYYY-MM-DD 21:00:00')}`,
+    },
+  )
+  const topPercent = 25
+  rankList = rankList.filter((rank) => rank.rankInfo['近1周']['前百分之'] < topPercent)
+  log.info(`前${topPercent}%的基金有${rankList.length}条`)
+  list = list.filter((item) => rankList.find((rank) => rank.fundCode === item['基金编码']))
+  log.info(`前${topPercent}%可购买的基金数据${list.length}条`)
+  excel.addSheet({ sheetName: `前${topPercent}%`, rows: list })
+
   list = list.filter(listFilter)
   if (!list.length) {
     log.info('基金列表过滤后无数据')
+    excel.done()
     return
   }
   log.info(`列表过滤后剩余基金数据${list.length}条`)
@@ -62,6 +83,7 @@ export async function filter() {
   list = list.filter((row) => !!fundDetailMap[row['基金编码']])
   if (!list.length) {
     log.info('符合涨势条件的基金列表无数据')
+    excel.done()
     return
   }
   log.info(`剩余符合涨势条件的基金数据${list.length}条`)
@@ -80,6 +102,7 @@ export async function filter() {
   list = list.filter(Boolean)
   if (!list.length) {
     log.info('符合赎回费率条件的基金列表无数据')
+    excel.done()
     return
   }
   log.info(`剩余赎回费率条件的基金数据${list.length}条`)
@@ -98,6 +121,8 @@ export async function filter() {
   log.table(list)
 
   excel.done()
+
+  writeToMd(list)
 
   return list
 }

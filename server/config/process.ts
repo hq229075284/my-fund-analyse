@@ -7,8 +7,8 @@ import { type IRowOfFundList } from '../api/fundList'
 
 export function listFilter(row:IRowOfFundList):boolean {
   return row['近1月(%)'] > 0
-    && row['近1周(%)'] < 0
-    && row['日增长(%)'] >= 0
+    && row['近1周(%)'] > 0
+    && row['近1月(%)'] - row['近1周(%)'] >= 0.5
 }
 
 export function detailFilter(result:IClassifiedFund):boolean {
@@ -17,19 +17,19 @@ export function detailFilter(result:IClassifiedFund):boolean {
 }
 
 export function transactionRateFilter(rateDescription:IRateAtRedemptionWithFrontEnd):boolean {
-  const day = 30
-  const ltRate = 0.15
+  const day = 31
+  const ltRate = 0.1
   const targets = rateDescription['前端赎回费率']
   for (let i = 0; i < targets.length; i += 1) {
     const { range, rate } = targets[i]
     if (Number(rate.replace('%', '')) <= ltRate) {
-      if (range.ge!=null && day < range.ge) {
+      if (range.ge != null && day < range.ge) {
         continue
       }
-      if (range.gt!=null && day <= range.gt) {
+      if (range.gt != null && day <= range.gt) {
         continue
       }
-      if (range.lt!=null && day >= range.lt) {
+      if (range.lt != null && day >= range.lt) {
         continue
       }
       return true

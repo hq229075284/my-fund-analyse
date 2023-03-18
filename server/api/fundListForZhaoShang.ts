@@ -1,5 +1,7 @@
+/* eslint-disable no-await-in-loop */
 import axios from 'axios'
 import log from '../utils/log'
+import { getDetail } from './fundDetailForZhaoShang'
 
 export interface IRowOfFundListForZhaoShang {
   '基金编码':string
@@ -14,6 +16,7 @@ export interface IRowOfFundListForZhaoShang {
   '近1年(%)':number
   '起购金额':'暂无数据'
   '手续费':'暂无数据'
+  '是否可购买': string
 }
 
 interface IRowOfFundListConstructor{
@@ -33,6 +36,8 @@ const Row = (function Row(item:any) {
     zf6m: last6Month,
     zf1y: lastYear,
 
+    isBuyAble,
+    fundid,
   } = item
   this['基金编码'] = code
   this['基金名称'] = name
@@ -46,6 +51,8 @@ const Row = (function Row(item:any) {
   this['近1年(%)'] = Number(lastYear.replace('%', ''))
   this['起购金额'] = '暂无数据'
   this['手续费'] = '暂无数据'
+  this['是否可购买'] = isBuyAble
+  this.fundid = fundid
   return this
 } as unknown as IRowOfFundListConstructor)
 
@@ -128,7 +135,6 @@ export async function filter({ requestParams = {}, limit = 100000 }:IFilterParam
   }
 
   while (!isFinished) {
-    // eslint-disable-next-line no-await-in-loop
     await getList()
     fyqsjlh += fyjlsl
   }
@@ -137,10 +143,18 @@ export async function filter({ requestParams = {}, limit = 100000 }:IFilterParam
     throw new Error(`${requestParams.type || '3'}，列表数据获取为空`)
   }
 
+  // await Promise.all(
+  //   result.map((r, i) => getDetail(result[i]).then((content) => {
+  //     result[i].isBuyAble = content?.isBuyAble || result[i].isBuyAble
+  //   })),
+  // )
+
+  //   console.log('result', result.length)
   const rows = result
     .filter((item) => item.isBuyAble === '1')
     .map((item) => new Row(item))
     .slice(0, limit)
+  //   console.log('rows', rows.length)
 
   return rows
 }
