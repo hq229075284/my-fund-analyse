@@ -47,14 +47,20 @@ type retryOption={
   tryCount?:number
   tryId?:string
   defaultValue?:any
+  interval?:number
 }
 export async function retry<T = any>(
   // eslint-disable-next-line @typescript-eslint/ban-types
   cacheFn:(...arg:any[])=> T,
-  { tryCount = 5, tryId, defaultValue = null }:retryOption = {},
+  {
+    tryCount = 5, tryId, defaultValue = null, interval = 0,
+  }:retryOption = {},
 ):Promise<Awaited<T>> {
   let time = 1
   while (time <= tryCount) {
+    if (time > 1 && interval > 0) {
+      await sleep(interval)
+    }
     try {
       return await cacheFn()
     } catch (e) {
@@ -66,4 +72,14 @@ export async function retry<T = any>(
     log.error(`retry fail,${tryId}`)
   }
   return defaultValue
+}
+
+export function getDateStamp() {
+  const now = dayjs()
+  const format = 'YYYY-MM-DD 21:00:00'
+  const useYesterday = now.isBefore(dayjs().hour(21).minute(0).second(0).millisecond(0))
+  if (useYesterday) {
+    return now.subtract(1, 'day').format(format)
+  }
+  return now.format(format)
 }

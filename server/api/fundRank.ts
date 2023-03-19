@@ -4,6 +4,7 @@
 /* eslint-disable arrow-body-style */
 /* eslint-disable no-await-in-loop */
 import axios from 'axios'
+import { retry, sleep } from '../utils/common'
 import log from '../utils/log'
 
 enum nameMap {
@@ -60,7 +61,7 @@ async function getRankInfo(fundCode:string) {
     url: `https://j5.fund.eastmoney.com/sc/tfs/qt/v2.0.1/${fundCode}.json`,
     method: 'get',
     params: {},
-    // timeout: 10 * 1000,
+    timeout: 10 * 1000,
     headers: {
       Referer: 'https://h5.1234567.com.cn/',
     },
@@ -81,71 +82,41 @@ async function getRankInfo(fundCode:string) {
   return data
 }
 
-const maxRetry = 5
-export async function getRankInfoWithTry(fundCode) {
-  let retry = 1
-  // let startTime
-  // let endTime
-  while (retry <= maxRetry) {
-    try {
-      // startTime = Date.now()
-      // if (retry > 1) {
-      //   await sleep(1000)
-      // }
-      const rankInfo = await getRankInfo(fundCode)
-      // log.info(`已获取rank,耗时${(endTime - startTime) / 1000}s`)
-      return rankInfo
-    } catch (e) {
-      // if (e.message === '请求超时') {
-      //   const duration = endTime - startTime
-      //   log.error(`${fundCode}基金,retry${retry}次,${e.message},时长${duration / 1000}s`)
-      // }
-      /*  */
-      // if (retry >= 3) {
-      //   log.error(`${fundCode}基金的排行数据retry${retry}次`)
-      // }
-    }
-    retry += 1
-  }
-  log.error(`该基金排行数据获取失败：${fundCode}`)
-  return null
-}
-
 export async function getRankByGroup(fundCodes:string[]) {
   // const _fundCodes = [...fundCodes]
+  let successCount = 0
+  let failCount = 0
   let result = [] as IDescriptionOfFundRank[]
-  // for (let i = 0; i < fundCodes.length; i += 1) {
-  const diff = 1
-  for (let i = 0; i < fundCodes.length; i += diff) {
-  //   const code = fundCodes[i]
-  //   const { rankCategory, retry } = await getRankCategory(code)
-  //   if (rankCategory) {
-  //     result.push({
-  //       fundCode: code,
-  //       data: rankCategory,
-  //       retry,
-  //     })
-  //   }
-    const codes = fundCodes.slice(i, i + diff)
+  const delta = 600
+  for (let i = 0; i < fundCodes.length; i += delta) {
+    const codes = fundCodes.slice(i, i + delta)
     await Promise.all(
-      codes.map((code) => getRankInfoWithTry(code).then((rankInfo) => {
+      codes.map(async (code) => {
+        const rankInfo = await retry(
+          () => getRankInfo(code),
+          {
+            tryCount: 10,
+            interval: 1 * 1000,
+            tryId: code,
+          },
+        )
         if (rankInfo) {
           result.push({
             fundCode: code,
             rankInfo,
           })
+          successCount += 1
+        } else {
+          failCount += 1
+          log.info(`排名数据获取失败,fundCode:${code}`)
         }
-      })),
+      }),
     )
-    log.info(`已读取 ${i + diff} 条，获取到rank ${result.length} 条`)
-    // result = result.concat(await Promise.all(
-    //   group.map((code) => getRankCategory(code)),
-    // ))
-    // if (_fundCodes.length) {
-    //   await sleep(1000)
-    // }
-    // await sleep(1000)
+    if (i + delta < fundCodes.length) {
+      await sleep(1000)
+    }
   }
+  log.info(`排名数据,已成功处理${successCount}条，失败${failCount}条`)
   return result
 }
 

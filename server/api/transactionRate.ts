@@ -1,5 +1,6 @@
+/* eslint-disable no-loop-func */
 import axios from 'axios'
-import { retry } from '../utils/common'
+import { retry, sleep } from '../utils/common'
 import log from '../utils/log'
 
 interface Ishfl{
@@ -19,7 +20,11 @@ export interface IRateAtRedemption{
   rate: string
 }
 
-export type IRateAtRedemptionWithFrontEnd={ 前端赎回费率: IRateAtRedemption[] }
+export type IRateAtRedemptionWithFrontEnd={
+  fundCode:string,
+  fundid?:string,
+  前端赎回费率: IRateAtRedemption[]
+}
 
 // 获取前端赎回费率
 function getFrontEndRedemptionRate(source:Ishfl[]) {
@@ -71,6 +76,7 @@ export async function getTransactionRate(fundCode:string) {
   const fundid = await axios({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     method: 'get',
+    timeout: 10 * 1000,
     params: {
       method: 'querycpxqv4',
       zqdm: fundCode,
@@ -78,7 +84,11 @@ export async function getTransactionRate(fundCode:string) {
   }).then((response) => response.data.content?.fundid)
 
   if (!fundid) {
-    r = { 前端赎回费率: [] }
+    r = {
+      fundCode,
+      fundid,
+      前端赎回费率: [],
+    }
     return r
   }
 
@@ -88,15 +98,19 @@ export async function getTransactionRate(fundCode:string) {
       method: 'queryjyxxv4',
       fundid,
     },
+    timeout: 10 * 1000,
     method: 'get',
   }).then((response) => {
     const { rgfl, sgfl, shfl } = response.data.content
-    const result = {} as IRateAtRedemptionWithFrontEnd
+    const result = {
+      fundCode,
+      fundid,
+    } as IRateAtRedemptionWithFrontEnd
     try {
       result['前端赎回费率'] = getFrontEndRedemptionRate(shfl)
     } catch {
+      log.error(`前端赎回费率解析失败:${fundCode}`)
       result['前端赎回费率'] = []
-      log.error(`前端赎回费率获取失败:${fundCode}`)
     }
     return result
   })
@@ -161,5 +175,65 @@ export async function getTransactionRateList(fundCodes:string[]) {
     const code = fundCodes[i]
     result.push(await getTransactionRateWithTry(code))
   }
+  return result
+}
+
+export async function patchTransactionRateWithTry(fundCodes:string[]) {
+  let successCount = 0
+  let failCount = 0
+  const delta = 600
+  const result = [] as IRateAtRedemptionWithFrontEnd[]
+  for (let i = 0; i < fundCodes.length - 1; i += delta) {
+    const codes = fundCodes.slice(i, i + delta)
+    const groupData = await Promise.all(
+      codes.map(async (fundCode) => {
+        let r = await retry(
+          () => getTransactionRate(fundCode),
+          {
+            tryId: fundCode,
+            interval: 1 * 1000,
+            tryCount: 10,
+          },
+        )
+        if (!r) {
+          failCount += 1
+          log.error(`前端赎回费率获取失败, fundCode:${fundCode}`)
+          r = { fundCode, 前端赎回费率: [] }
+        } else {
+          successCount += 1
+        }
+        return r
+      }),
+    )
+    // console.log(`${delta} over----------------------`)
+    result.push(...groupData)
+    // if (i + delta < fundCodes.length) {
+    //   await sleep(1000)
+    // }
+  }
+  log.info(`前端赎回费率,已成功处理${successCount}条，失败${failCount}条`)
+
+  // const result = await Promise.all(
+  //   fundCodes.map(async (fundCode) => {
+  //     const r = await retry(
+  //       () => getTransactionRate(fundCode),
+  //       {
+  //         tryId: fundCode,
+  //         defaultValue: { 前端赎回费率: [] },
+  //         interval: 1 * 1000,
+  //         tryCount: 30,
+  //       },
+  //     )
+  //     if (!r['前端赎回费率'].length) {
+  //       failCount += 1
+  //       log.error(`前端赎回费率获取失败, fundCode:${fundCode} fundid:${r.fundid}`)
+  //     } else {
+  //       successCount += 1
+  //     }
+  //     log.info(`前端赎回费率,已成功处理${successCount}条，失败${failCount}条`)
+  //     return r
+  //   }),
+  // )
+  // log.info(`前端赎回费率,已成功处理${successCount}条，失败${failCount}条`)
   return result
 }

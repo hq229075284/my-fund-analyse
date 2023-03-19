@@ -1,6 +1,7 @@
+/* eslint-disable no-loop-func */
 import axios from 'axios'
 import dayjs from 'dayjs'
-import { retry } from '../utils/common'
+import { retry, sleep } from '../utils/common'
 import log from '../utils/log'
 
 export function getDateRange(value:number, unit:dayjs.ManipulateType) {
@@ -17,7 +18,7 @@ interface ISort<T=string>{
 type ISortName='近1周'|'近1月'|'近3月'|'近6月'|'近1年'
 export type IClassifiedFund = {fundCode:string}&{
   [Category in ISortName]:{
-    collection: {x:number, y:number}[]
+    lastItem: {x:number, y:number}
     description: ISortName
     startDate:number
     endDate:number
@@ -59,7 +60,7 @@ export async function getChartData(fundCode:string) {
           Object.entries(prev).forEach(([key, item]) => {
             if (typeof item === 'string') return
             if (data.x >= item.startDate && data.x <= item.endDate) {
-              item.collection.push(data)
+              item.lastItem = data
               if (item.max) {
                 if (data.y > item.max) item.max = data.y
               } else {
@@ -78,7 +79,7 @@ export async function getChartData(fundCode:string) {
         // eslint-disable-next-line no-param-reassign
           prev[item.key] = {
             ...getDateRange(...item.range),
-            collection: [] as {x: number; y: number;}[],
+            lastItem: {} as {x: number; y: number;},
             description: item.key,
             max: 0,
             min: Infinity,
@@ -91,7 +92,8 @@ export async function getChartData(fundCode:string) {
       Object.entries(chartData).forEach(([key, item]) => {
         if (typeof item === 'string') return
         try {
-          item.currentPercent = (item.collection[item.collection.length - 1].y - item.min) / (item.max - item.min) * 100
+          item.currentPercent = (item.lastItem.y - item.min) / (item.max - item.min) * 100
+          if (Object.is(NaN, item.currentPercent)) item.currentPercent = 0
         } catch {
           item.currentPercent = 0
         }
@@ -152,11 +154,36 @@ export async function getDetail(fundCode) {
 // getDetail('675093')
 
 export async function getDetails(fundCodes:string[]) {
+  let successCount = 0
+  let failCount = 0
   const result = [] as IClassifiedFund[]
-  for (let i = 0; i < fundCodes.length; i += 1) {
-    const code = fundCodes[i]
-    result.push(await getDetail(code))
-    // console.log(`resolve ${i}`)
+  const delta = 600
+  for (let i = 0; i < fundCodes.length; i += delta) {
+    const codes = fundCodes.slice(i, i + delta)
+    await Promise.all(
+      codes.map(async (code) => {
+        const chartData = await retry(
+          () => getChartData(code),
+          {
+            tryCount: 10,
+            interval: 1 * 1000,
+            tryId: code,
+          },
+        )
+        if (chartData) {
+          result.push(chartData)
+          successCount += 1
+        } else {
+          failCount += 1
+          log.info(`基金详情数据获取失败,fundCode:${code}`)
+        }
+        // log.info(`基金详情数据,已成功处理${successCount}条，失败${failCount}条`)
+      }),
+    )
+    if (i + delta < fundCodes.length) {
+      await sleep(1000)
+    }
   }
+  log.info(`基金详情数据,已成功处理${successCount}条，失败${failCount}条`)
   return result
 }

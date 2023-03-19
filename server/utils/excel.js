@@ -33,6 +33,7 @@ class Excel {
   }
 
   done() {
+    this.workbook.SheetNames.reverse()
     XLSX.writeFile(this.workbook, this.filePath)
   }
 }

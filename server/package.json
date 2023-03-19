@@ -26,7 +26,7 @@
   "scripts": {
     "url": "node ./utils/parseUrlSearch.mjs",
     "output": "ts-node ./utils/output.ts",
-    "ts1": "ts-node ./api/index.ts",
+    "pull": "ts-node ./utils/pullData.ts",
     "test": "jest"
   },
   "keywords": [],
