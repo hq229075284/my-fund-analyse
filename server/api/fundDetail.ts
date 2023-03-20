@@ -198,7 +198,7 @@ export function createWriteCacheForDetail(fundCodes:string[]) {
     try {
       let successCount = 0
       let failCount = 0
-      const delta = 100
+      const delta = 600
       for (let i = 0; i < fundCodes.length; i += delta) {
         const codes = fundCodes.slice(i, i + delta)
         const result = [] as IClassifiedFund[]
