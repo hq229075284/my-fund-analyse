@@ -1,8 +1,11 @@
 /* eslint-disable no-loop-func */
 import axios from 'axios'
 import dayjs from 'dayjs'
-import { retry, sleep } from '../utils/common'
+import fs from 'node:fs'
+import path from 'node:path'
+import { mkdirp } from 'mkdirp'
 import log from '../utils/log'
+import { retry, sleep } from '../utils/common'
 
 export function getDateRange(value:number, unit:dayjs.ManipulateType) {
   const endDate = dayjs().hour(0).minute(0).second(0).millisecond(0).valueOf()
@@ -186,4 +189,44 @@ export async function getDetails(fundCodes:string[]) {
   }
   log.info(`基金详情数据,已成功处理${successCount}条，失败${failCount}条`)
   return result
+}
+
+export function createWriteCacheForDetail(fundCodes:string[]) {
+  return async (filePath:string) => {
+    mkdirp.sync(path.dirname(filePath))
+    fs.writeFileSync(filePath, '[')
+    let successCount = 0
+    let failCount = 0
+    const delta = 600
+    for (let i = 0; i < fundCodes.length; i += delta) {
+      const codes = fundCodes.slice(i, i + delta)
+      const result = [] as IClassifiedFund[]
+      await Promise.all(
+        codes.map(async (code) => {
+          const chartData = await retry(
+            () => getChartData(code),
+            {
+              tryCount: 10,
+              interval: 1 * 1000,
+              tryId: code,
+            },
+          )
+          if (chartData) {
+            result.push(chartData)
+            successCount += 1
+          } else {
+            failCount += 1
+            log.info(`基金详情数据获取失败,fundCode:${code}`)
+          }
+        // log.info(`基金详情数据,已成功处理${successCount}条，失败${failCount}条`)
+        }),
+      )
+      await fs.promises.appendFile(filePath, `${i > 0 ? ',' : ''}${JSON.stringify(result).replace(/^\[|\]$/g, '')}`)
+      if (i + delta < fundCodes.length) {
+        await sleep(1000)
+      }
+    }
+    await fs.promises.appendFile(filePath, ']')
+    log.info(`基金详情数据,已成功处理${successCount}条，失败${failCount}条`)
+  }
 }

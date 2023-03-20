@@ -1,15 +1,16 @@
-import dayjs from 'dayjs'
 import { getFundList, IFilterParams } from './fundList'
 // import { getFundList as getFundListForZhaoShang } from './fundListForZhaoShang'
-import { getDetails, type IClassifiedFund } from './fundDetail'
+import { createWriteCacheForDetail, type IClassifiedFund } from './fundDetail'
 import {
-  getTransactionRateList, IRateAtRedemptionWithFrontEnd, patchTransactionRateWithTry,
+  createWriteCacheForRedeem, IRateAtRedemptionWithFrontEnd,
 } from './transactionRate'
 import { listFilter, detailFilter, transactionRateFilter } from '../config/process'
 import log from '../utils/log'
 import createExcel from '../utils/excel'
-import { getRankByGroup } from './fundRank'
-import { useCache, getDateStamp } from '../utils/common'
+import { createWriteCacheForRank, IDescriptionOfFundRank } from './fundRank'
+import {
+  getDateStamp, readDataFromFile, getCachePath,
+} from '../utils/common'
 import { writeToMd } from '../utils/md'
 
 export async function filter() {
@@ -17,10 +18,10 @@ export async function filter() {
   const excel = createExcel()
 
   const ft:IFilterParams['requestParams']['ft'] = 'hh'
+  const stamp = getDateStamp()
 
   // 获取符合条件的基金列表
   let list = await getFundList({ requestParams: { ft } })
-
   if (!list.length) {
     log.info('基金列表初始无数据')
     return
@@ -44,11 +45,10 @@ export async function filter() {
   // log.info(`根据招商数据，过滤天天基金数据，得出可购买的基金数据${refList.length}条`)
 
   // #region 排行数据
-  let rankList = await useCache(
-    () => getRankByGroup(list.map((l) => l['基金编码'])),
-    {
-      cacheName: `${ft}排名数据${getDateStamp()}`,
-    },
+  let rankList:IDescriptionOfFundRank[] = await readDataFromFile(
+    '排行数据',
+    getCachePath(`${ft}排名数据${stamp}`),
+    createWriteCacheForRank(list.map((l) => l['基金编码'])),
   )
   const topPercent = 25
   rankList = rankList.filter((rank) => rank.rankInfo['近1周']['前百分之'] < topPercent)
@@ -56,6 +56,7 @@ export async function filter() {
   list = list.filter((item) => rankList.find((rank) => rank.fundCode === item['基金编码']))
   log.info(`前${topPercent}%可购买的基金数据${list.length}条`)
   excel.addSheet({ sheetName: `前${topPercent}%`, rows: list })
+  // @ts-ignore 释放内存
   rankList = null
   // #regionend 排行数据
 
@@ -72,11 +73,10 @@ export async function filter() {
 
   // #region 基金详情数据
   // 查询列表中每一个基金的详情
-  let fundDetailList = await useCache(
-    () => getDetails(list.map((l) => l['基金编码'])),
-    {
-      cacheName: `${ft}基金详情数据${getDateStamp()}`,
-    },
+  let fundDetailList:IClassifiedFund[] = await readDataFromFile(
+    '详情数据',
+    getCachePath(`${ft}详情数据${stamp}`),
+    createWriteCacheForDetail(list.map((l) => l['基金编码'])),
   )
   let fundDetailMap = fundDetailList
     .filter<IClassifiedFund>((item):item is IClassifiedFund => Boolean(item))
@@ -105,16 +105,17 @@ export async function filter() {
       ...row,
       '近一年范围内，当前净值百分点': `${fundDetailMap[row['基金编码']]['近1年'].currentPercent}%`,
     }))
+  // @ts-ignore 释放内存
   fundDetailMap = null
+  // @ts-ignore 释放内存
   fundDetailList = null
   // #regionend 基金详情数据
 
   // 过滤出符合赎回费率条件的基金
-  let fundRateAtRedemptionList = await useCache(
-    () => patchTransactionRateWithTry(list.map((l) => l['基金编码'])),
-    {
-      cacheName: `${ft}赎回数据${getDateStamp()}`,
-    },
+  let fundRateAtRedemptionList:IRateAtRedemptionWithFrontEnd[] = await readDataFromFile(
+    '赎回数据',
+    getCachePath(`${ft}赎回数据${stamp}`),
+    createWriteCacheForRedeem(list.map((l) => l['基金编码'])),
   )
   list = list.filter((item) => {
     const rate = fundRateAtRedemptionList.find((rate) => rate.fundCode === item['基金编码'])
@@ -126,6 +127,7 @@ export async function filter() {
     excel.done()
     return
   }
+  // @ts-ignore 释放内存
   fundRateAtRedemptionList = null
   log.info(`剩余赎回费率条件的基金数据${list.length}条`)
   excel.addSheet({ sheetName: '符合赎回费率条件的基金列表', rows: list })

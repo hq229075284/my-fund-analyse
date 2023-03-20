@@ -15,6 +15,10 @@ class Log {
   table(rows:any) {
     console.table(rows)
   }
+
+  lineInfo(msg:string) {
+    console.log(`-------------${msg}-------------`)
+  }
 }
 
 export default new Log()

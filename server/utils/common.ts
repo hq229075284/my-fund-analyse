@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { mkdirp } from 'mkdirp'
 import path from 'node:path'
 import fs from 'node:fs'
+import axios from 'axios'
 import log from './log'
 
 export async function sleep(t = 1000) {
@@ -18,12 +19,16 @@ type useCacheParams={
   force?:boolean
 }
 
+export function getCachePath(cacheName:string) {
+  return path.resolve(__dirname, `../cache/${cacheName}.json`)
+}
+
 export async function useCache<T = any>(
   // eslint-disable-next-line @typescript-eslint/ban-types
   cacheFn:(...arg:any[])=> T,
   {
     cacheName = dayjs().format('YYYY-MM-DD HH:mm:ss'),
-    cachePath = path.resolve(__dirname, `../cache/${cacheName}.json`),
+    cachePath = getCachePath(cacheName),
     force = false,
   }:useCacheParams = {},
 ):Promise<Awaited<T>> {
@@ -76,10 +81,53 @@ export async function retry<T = any>(
 
 export function getDateStamp() {
   const now = dayjs()
-  const format = 'YYYY-MM-DD 21:00:00'
+  const format = 'YYYY-MM-DD 21-00-00'
   const useYesterday = now.isBefore(dayjs().hour(21).minute(0).second(0).millisecond(0))
   if (useYesterday) {
     return now.subtract(1, 'day').format(format)
   }
   return now.format(format)
+}
+
+export async function readDataFromFile(
+  type:`${'排行'|'详情'|'赎回'}数据`,
+  filePath:string,
+  writeCache:(filePath:string)=>any,
+  refresh = false,
+) {
+  const linkReg = /^https?:\/\//
+  const isRemote = linkReg.test(filePath)
+  let remotePath
+  let localPath
+  if (isRemote) {
+    remotePath = filePath
+    localPath = getCachePath(filePath.split('/').pop()!.split('.')[0])
+  } else {
+    localPath = filePath
+  }
+  log.lineInfo(`start ${type}`)
+  if (fs.existsSync(localPath) && !refresh) {
+    log.info(`使用本地缓存数据=>${localPath}`)
+    const data = await fs.promises.readFile(localPath, { encoding: 'utf8' })
+    log.lineInfo(`end ${type}`)
+    return JSON.parse(data)
+  }
+  log.info('本地缓存不存在，开始读取新数据')
+  if (isRemote) {
+    log.info(`读取服务器数据=>${remotePath}`)
+    const { data } = await axios({
+      method: 'get',
+      url: filePath,
+      responseType: 'json',
+    })
+    fs.promises.writeFile(localPath, JSON.stringify(data))
+    log.lineInfo(`end ${type}`)
+    return data
+  }
+  log.info('读取origin服务器数据')
+  await writeCache(localPath)
+  log.info(`已写入本地缓存=>${localPath}`)
+  const data = await fs.promises.readFile(localPath, { encoding: 'utf8' })
+  log.lineInfo(`end ${type}`)
+  return JSON.parse(data)
 }

@@ -4,6 +4,9 @@
 /* eslint-disable arrow-body-style */
 /* eslint-disable no-await-in-loop */
 import axios from 'axios'
+import fs from 'node:fs'
+import path from 'node:path'
+import { mkdirp } from 'mkdirp'
 import { retry, sleep } from '../utils/common'
 import log from '../utils/log'
 
@@ -143,3 +146,45 @@ export async function getRankByGroup(fundCodes:string[]) {
 // }
 
 // getRankByGroup(new Array(1000).fill('004402'))
+
+export function createWriteCacheForRank(fundCodes:string[]) {
+  return async function pullRankDataToFile(filePath:string) {
+    mkdirp.sync(path.dirname(filePath))
+    fs.writeFileSync(filePath, '[')
+    let successCount = 0
+    let failCount = 0
+    const delta = 600
+    for (let i = 0; i < fundCodes.length; i += delta) {
+      const codes = fundCodes.slice(i, i + delta)
+      const result = [] as IDescriptionOfFundRank[]
+      await Promise.all(
+        codes.map(async (code) => {
+          const rankInfo = await retry(
+            () => getRankInfo(code),
+            {
+              tryCount: 10,
+              interval: 1 * 1000,
+              tryId: code,
+            },
+          )
+          if (rankInfo) {
+            successCount += 1
+            result.push({
+              fundCode: code,
+              rankInfo,
+            })
+          } else {
+            failCount += 1
+            log.info(`排名数据获取失败,fundCode:${code}`)
+          }
+        }),
+      )
+      await fs.promises.appendFile(filePath, `${i > 0 ? ',' : ''}${JSON.stringify(result).replace(/^\[|\]$/g, '')}`)
+      if (i + delta < fundCodes.length) {
+        await sleep(1000)
+      }
+    }
+    await fs.promises.appendFile(filePath, ']')
+    log.info(`排名数据,已成功处理${successCount}条，失败${failCount}条`)
+  }
+}
