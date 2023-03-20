@@ -101,7 +101,7 @@ export async function getTransactionRate(fundCode:string) {
       method: 'queryjyxxv4',
       fundid,
     },
-    timeout: 10 * 1000,
+    timeout: 20 * 1000,
     method: 'get',
   }).then((response) => {
     const { rgfl, sgfl, shfl } = response.data.content
@@ -259,7 +259,7 @@ export function createWriteCacheForRedeem(fundCodes:string[]) {
               {
                 tryId: fundCode,
                 interval: 1 * 1000,
-                tryCount: 10,
+                tryCount: 20,
               },
             )
             if (!r) {

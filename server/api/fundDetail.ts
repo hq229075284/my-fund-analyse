@@ -39,7 +39,7 @@ export async function getChartData(fundCode:string) {
     url: `http://fund.eastmoney.com/pingzhongdata/${fundCode}.js?v=${dayjs().format('YYYYMMDDHHmmss')}`,
     method: 'get',
     params: {},
-    timeout: 10 * 1000,
+    timeout: 20 * 1000,
     headers: {
       Referer: 'http://fund.eastmoney.com/',
     },
@@ -207,7 +207,7 @@ export function createWriteCacheForDetail(fundCodes:string[]) {
             const chartData = await retry(
               () => getChartData(code),
               {
-                tryCount: 10,
+                tryCount: 20,
                 interval: 1 * 1000,
                 tryId: code,
               },

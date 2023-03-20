@@ -64,7 +64,7 @@ async function getRankInfo(fundCode:string) {
     url: `https://j5.fund.eastmoney.com/sc/tfs/qt/v2.0.1/${fundCode}.json`,
     method: 'get',
     params: {},
-    timeout: 10 * 1000,
+    timeout: 20 * 1000,
     headers: {
       Referer: 'https://h5.1234567.com.cn/',
     },
@@ -163,7 +163,7 @@ export function createWriteCacheForRank(fundCodes:string[]) {
             const rankInfo = await retry(
               () => getRankInfo(code),
               {
-                tryCount: 10,
+                tryCount: 20,
                 interval: 1 * 1000,
                 tryId: code,
               },

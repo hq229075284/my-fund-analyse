@@ -1,3 +1,4 @@
+import { argv } from 'process'
 import { getFundList, IFilterParams } from './fundList'
 // import { getFundList as getFundListForZhaoShang } from './fundListForZhaoShang'
 import { createWriteCacheForDetail, type IClassifiedFund } from './fundDetail'
@@ -17,7 +18,7 @@ export async function filter() {
   const startTime = Date.now()
   const excel = createExcel()
 
-  const ft:IFilterParams['requestParams']['ft'] = 'hh'
+  const ft = (argv.slice(2)[0] || 'hh') as IFilterParams['requestParams']['ft']
   const stamp = getDateStamp()
 
   // 获取符合条件的基金列表
@@ -26,6 +27,8 @@ export async function filter() {
     log.info('基金列表初始无数据')
     return
   }
+
+  const fundCodes = list.map((l) => l['基金编码'])
 
   log.info(`天天基金获取基金数据${list.length}条`)
   excel.addSheet({ sheetName: '天天基金', rows: list })
@@ -48,7 +51,7 @@ export async function filter() {
   let rankList:IDescriptionOfFundRank[] = await readDataFromFile(
     '排行数据',
     getCachePath(`${ft}排名数据${stamp}`),
-    createWriteCacheForRank(list.map((l) => l['基金编码'])),
+    createWriteCacheForRank(fundCodes),
   )
   const topPercent = 25
   rankList = rankList.filter((rank) => rank.rankInfo['近1周']['前百分之'] < topPercent)
@@ -76,7 +79,7 @@ export async function filter() {
   let fundDetailList:IClassifiedFund[] = await readDataFromFile(
     '详情数据',
     getCachePath(`${ft}详情数据${stamp}`),
-    createWriteCacheForDetail(list.map((l) => l['基金编码'])),
+    createWriteCacheForDetail(fundCodes),
   )
   let fundDetailMap = fundDetailList
     .filter<IClassifiedFund>((item):item is IClassifiedFund => Boolean(item))
@@ -115,7 +118,7 @@ export async function filter() {
   let fundRateAtRedemptionList:IRateAtRedemptionWithFrontEnd[] = await readDataFromFile(
     '赎回数据',
     getCachePath(`${ft}赎回数据${stamp}`),
-    createWriteCacheForRedeem(list.map((l) => l['基金编码'])),
+    createWriteCacheForRedeem(fundCodes),
   )
   list = list.filter((item) => {
     const rate = fundRateAtRedemptionList.find((rate) => rate.fundCode === item['基金编码'])

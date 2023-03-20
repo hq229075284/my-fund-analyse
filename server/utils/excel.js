@@ -39,7 +39,7 @@ class Excel {
 }
 
 function createExcel(
-  filePath = path.resolve(__dirname, `../xlsx/${dayjs().format('YYYY-MM-DD HH:mm:ss')}.xlsx`),
+  filePath = path.resolve(__dirname, `../xlsx/${dayjs().format('YYYY-MM-DD HH-mm-ss')}.xlsx`),
 ) {
   mkdirp.sync(path.dirname(filePath))
   return new Excel({
