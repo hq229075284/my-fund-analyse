@@ -197,7 +197,7 @@ export function createWriteCacheForDetail(fundCodes:string[]) {
     fs.writeFileSync(filePath, '[')
     let successCount = 0
     let failCount = 0
-    const delta = 600
+    const delta = 100
     for (let i = 0; i < fundCodes.length; i += delta) {
       const codes = fundCodes.slice(i, i + delta)
       const result = [] as IClassifiedFund[]
