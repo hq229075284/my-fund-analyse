@@ -245,38 +245,43 @@ export function createWriteCacheForRedeem(fundCodes:string[]) {
   return async (filePath:string) => {
     mkdirp.sync(path.dirname(filePath))
     fs.writeFileSync(filePath, '[')
-    let successCount = 0
-    let failCount = 0
-    const delta = 600
-    for (let i = 0; i < fundCodes.length - 1; i += delta) {
-      const codes = fundCodes.slice(i, i + delta)
-      const result = [] as IRateAtRedemptionWithFrontEnd[]
-      await Promise.all(
-        codes.map(async (fundCode) => {
-          let r = await retry(
-            () => getTransactionRate(fundCode),
-            {
-              tryId: fundCode,
-              interval: 1 * 1000,
-              tryCount: 10,
-            },
-          )
-          if (!r) {
-            failCount += 1
-            log.error(`前端赎回费率获取失败, fundCode:${fundCode}`)
-            r = { fundCode, 前端赎回费率: [] }
-          } else {
-            successCount += 1
-          }
-          result.push(r)
-        }),
-      )
-      await fs.promises.appendFile(filePath, `${i > 0 ? ',' : ''}${JSON.stringify(result).replace(/^\[|\]$/g, '')}`)
-      if (i + delta < fundCodes.length) {
-        await sleep(1000)
+    try {
+      let successCount = 0
+      let failCount = 0
+      const delta = 600
+      for (let i = 0; i < fundCodes.length - 1; i += delta) {
+        const codes = fundCodes.slice(i, i + delta)
+        const result = [] as IRateAtRedemptionWithFrontEnd[]
+        await Promise.all(
+          codes.map(async (fundCode) => {
+            let r = await retry(
+              () => getTransactionRate(fundCode),
+              {
+                tryId: fundCode,
+                interval: 1 * 1000,
+                tryCount: 10,
+              },
+            )
+            if (!r) {
+              failCount += 1
+              log.error(`前端赎回费率获取失败, fundCode:${fundCode}`)
+              r = { fundCode, 前端赎回费率: [] }
+            } else {
+              successCount += 1
+            }
+            result.push(r)
+          }),
+        )
+        await fs.promises.appendFile(filePath, `${i > 0 ? ',' : ''}${JSON.stringify(result).replace(/^\[|\]$/g, '')}`)
+        if (i + delta < fundCodes.length) {
+          await sleep(1000)
+        }
       }
+      await fs.promises.appendFile(filePath, ']')
+      log.info(`前端赎回费率,已成功处理${successCount}条，失败${failCount}条`)
+    } catch (error) {
+      fs.rmSync(filePath)
+      throw error
     }
-    await fs.promises.appendFile(filePath, ']')
-    log.info(`前端赎回费率,已成功处理${successCount}条，失败${failCount}条`)
   }
 }

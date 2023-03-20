@@ -114,15 +114,19 @@ export async function readDataFromFile(
   }
   log.info('本地缓存不存在，开始读取新数据')
   if (isRemote) {
-    log.info(`读取服务器数据=>${remotePath}`)
-    const { data } = await axios({
-      method: 'get',
-      url: filePath,
-      responseType: 'json',
-    })
-    fs.promises.writeFile(localPath, JSON.stringify(data))
-    log.lineInfo(`end ${type}`)
-    return data
+    try {
+      log.info(`读取服务器数据=>${remotePath}`)
+      const { data } = await axios({
+        method: 'get',
+        url: filePath,
+        responseType: 'json',
+      })
+      fs.promises.writeFile(localPath, JSON.stringify(data))
+      log.lineInfo(`end ${type}`)
+      return data
+    } catch {
+      log.error('服务器数据获取失败')
+    }
   }
   log.info('读取origin服务器数据')
   await writeCache(localPath)
