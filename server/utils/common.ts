@@ -106,13 +106,17 @@ export async function readDataFromFile(
     localPath = filePath
   }
   log.lineInfo(`start ${type}`)
-  if (fs.existsSync(localPath) && !refresh) {
-    log.info(`使用本地缓存数据=>${localPath}`)
-    const data = await fs.promises.readFile(localPath, { encoding: 'utf8' })
-    log.lineInfo(`end ${type}`)
-    return JSON.parse(data)
+  if (refresh) {
+    log.info('不使用本地缓存，开始读取新数据')
+  } else {
+    if (fs.existsSync(localPath)) {
+      log.info(`使用本地缓存数据=>${localPath}`)
+      const data = await fs.promises.readFile(localPath, { encoding: 'utf8' })
+      log.lineInfo(`end ${type}`)
+      return JSON.parse(data)
+    }
+    log.info('本地缓存不存在，开始读取新数据')
   }
-  log.info('本地缓存不存在，开始读取新数据')
   if (isRemote) {
     try {
       log.info(`读取服务器数据=>${remotePath}`)

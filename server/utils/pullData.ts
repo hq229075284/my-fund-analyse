@@ -29,18 +29,21 @@ async function run() {
     '排行数据',
     getCachePath(`${ft}排名数据${stamp}`),
     createWriteCacheForRank(list.map((l) => l['基金编码'])),
+    true,
   )
 
   await readDataFromFile(
     '详情数据',
     getCachePath(`${ft}详情数据${stamp}`),
     createWriteCacheForDetail(list.map((l) => l['基金编码'])),
+    true,
   )
 
   await readDataFromFile(
     '赎回数据',
     getCachePath(`${ft}赎回数据${stamp}`),
     createWriteCacheForRedeem(list.map((l) => l['基金编码'])),
+    true,
   )
 
   // log.info('开始获取基金详情数据')
