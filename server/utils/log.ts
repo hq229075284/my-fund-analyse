@@ -17,7 +17,10 @@ class Log {
   }
 
   lineInfo(msg:string) {
-    console.log(`-------------${msg}-------------`)
+    const length = 40
+    const left = Math.floor((length - msg.length) / 2)
+    const right = length - msg.length - left
+    console.log(`${'-'.repeat(left)}${msg}${'-'.repeat(right)}`)
   }
 }
 

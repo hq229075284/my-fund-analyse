@@ -29,6 +29,8 @@ export type IRateAtRedemptionWithFrontEnd={
   前端赎回费率: IRateAtRedemption[]
 }
 
+export type IRateAtRedemptionWithFrontEndAndLastTenTrend={lastTenTrend:{x:string, y:number}[]}&IRateAtRedemptionWithFrontEnd
+
 // 获取前端赎回费率
 function getFrontEndRedemptionRate(source:Ishfl[]) {
   const result = [] as IRateAtRedemption[]
@@ -75,7 +77,7 @@ function getFrontEndRedemptionRate(source:Ishfl[]) {
 }
 
 export async function getTransactionRate(fundCode:string) {
-  let r:IRateAtRedemptionWithFrontEnd
+  let r:IRateAtRedemptionWithFrontEndAndLastTenTrend
   const fundid = await axios({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     method: 'get',
@@ -91,11 +93,12 @@ export async function getTransactionRate(fundCode:string) {
       fundCode,
       fundid,
       前端赎回费率: [],
+      lastTenTrend: [],
     }
     return r
   }
 
-  r = await axios({
+  const redemptionData = await axios({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     params: {
       method: 'queryjyxxv4',
@@ -117,6 +120,26 @@ export async function getTransactionRate(fundCode:string) {
     }
     return result
   })
+
+  const lastTenTrend = await axios({
+    method: 'get',
+    url: 'https://xtrade.newone.com.cn/lc/api/getData',
+    params: {
+      method: 'queryjjjzv4',
+      fundid,
+    },
+  }).then((response) => {
+    let { xAxis, yyseries } = response.data.content
+    xAxis = xAxis.slice(-10)
+    yyseries = yyseries[2].data.slice(-10)
+    return xAxis.reduce((prev, x, i) => {
+      prev.push({ x, y: yyseries[i] })
+      return prev
+    }, [] as {x:string, y:number}[])
+  })
+
+  r = { ...redemptionData, lastTenTrend }
+
   return r
 }
 
@@ -201,7 +224,7 @@ export async function patchTransactionRateWithTry(fundCodes:string[]) {
         if (!r) {
           failCount += 1
           log.error(`前端赎回费率获取失败, fundCode:${fundCode}`)
-          r = { fundCode, 前端赎回费率: [] }
+          r = { fundCode, 前端赎回费率: [], lastTenTrend: [] }
         } else {
           successCount += 1
         }
@@ -265,7 +288,7 @@ export function createWriteCacheForRedeem(fundCodes:string[]) {
             if (!r) {
               failCount += 1
               log.error(`前端赎回费率获取失败, fundCode:${fundCode}`)
-              r = { fundCode, 前端赎回费率: [] }
+              r = { fundCode, 前端赎回费率: [], lastTenTrend: [] }
             } else {
               successCount += 1
             }

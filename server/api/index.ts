@@ -3,9 +3,11 @@ import { getFundList, IFilterParams } from './fundList'
 // import { getFundList as getFundListForZhaoShang } from './fundListForZhaoShang'
 import { createWriteCacheForDetail, type IClassifiedFund } from './fundDetail'
 import {
-  createWriteCacheForRedeem, IRateAtRedemptionWithFrontEnd,
+  createWriteCacheForRedeem, IRateAtRedemptionWithFrontEnd, IRateAtRedemptionWithFrontEndAndLastTenTrend,
 } from './transactionRate'
-import { listFilter, detailFilter, transactionRateFilter } from '../config/process'
+import {
+  listFilter, detailFilter, transactionRateFilter, rankFilter,
+} from '../config/process'
 import log from '../utils/log'
 import createExcel from '../utils/excel'
 import { createWriteCacheForRank, IDescriptionOfFundRank } from './fundRank'
@@ -53,12 +55,12 @@ export async function filter() {
     getCachePath(`${ft}排名数据${stamp}`),
     createWriteCacheForRank(fundCodes),
   )
-  const topPercent = 25
-  rankList = rankList.filter((rank) => rank.rankInfo['近1周']['前百分之'] < topPercent)
-  log.info(`前${topPercent}%的基金有${rankList.length}条`)
+  // const topPercent = rankFilter()
+  rankList = rankList.filter(rankFilter)
+  // log.info(`符合排名条件的基金有${rankList.length}条`)
   list = list.filter((item) => rankList.find((rank) => rank.fundCode === item['基金编码']))
-  log.info(`前${topPercent}%可购买的基金数据${list.length}条`)
-  excel.addSheet({ sheetName: `前${topPercent}%`, rows: list })
+  log.info(`符合排名条件可购买的基金数据${list.length}条`)
+  excel.addSheet({ sheetName: '排名前百分比', rows: list })
   // @ts-ignore 释放内存
   rankList = null
   // #regionend 排行数据
@@ -115,7 +117,7 @@ export async function filter() {
   // #regionend 基金详情数据
 
   // 过滤出符合赎回费率条件的基金
-  let fundRateAtRedemptionList:IRateAtRedemptionWithFrontEnd[] = await readDataFromFile(
+  let fundRateAtRedemptionList:IRateAtRedemptionWithFrontEndAndLastTenTrend[] = await readDataFromFile(
     '赎回数据',
     getCachePath(`${ft}赎回数据${stamp}`),
     createWriteCacheForRedeem(fundCodes),
