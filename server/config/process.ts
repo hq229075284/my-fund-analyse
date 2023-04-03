@@ -12,7 +12,13 @@ export function listFilter(row:IRowOfFundList):boolean {
   // return row['近1月(%)'] > -0.3
   //   && row['近1周(%)'] >= 0.2
   // && row['日增长(%)'] <= 0.2
-  // && row['日增长(%)'] < 0
+  && !['一年', '三年', '五年', '3个月', '6个月', '六个月', '港股', 'FOF', /A$/].find((key) => {
+    if (key instanceof RegExp) {
+      return key.test(row['基金名称'])
+    }
+    return row['基金名称'].includes(key)
+  })
+  && row['日增长(%)'] !== 0
   // && row['近1周(%)'] - row['日增长(%)'] >= 0.5
   // && row['近6月(%)'] < 0
 }
@@ -26,11 +32,11 @@ export function detailFilter(result:IClassifiedFund):boolean {
 }
 
 export function transactionRateFilter(rateDescription:IRateAtRedemptionWithFrontEndAndLastTenTrend):boolean {
-  const trend = rateDescription.lastTenTrend.slice(5).reduce((prev, { y }) => prev + Math.min(0, y), 0)
-  // const isDown = rateDescription.lastTenTrend.slice(-2).every(({ y }) => y < 0)
-  if (trend > -5) return false
+  const trend = rateDescription.lastTenTrend.slice(7).reduce((prev, { y }) => prev + Math.min(0, y), 0)
+  const isDown = rateDescription.lastTenTrend.slice(-2).every(({ y }) => y < 0) && rateDescription.lastTenTrend.some(({ y }) => y > 0)
+  if (!(isDown /* && trend <= -1 */)) return false
 
-  const day = 7
+  const day = 30
   const ltRate = 0.5
   const targets = rateDescription['前端赎回费率']
   for (let i = 0; i < targets.length; i += 1) {
