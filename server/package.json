@@ -27,6 +27,7 @@
     "url": "node ./utils/parseUrlSearch.mjs",
     "output": "ts-node ./utils/output.ts",
     "pull": "ts-node ./utils/pullData.ts",
+    "sp": "ts-node ./api/speculate.ts",
     "test": "jest"
   },
   "keywords": [],

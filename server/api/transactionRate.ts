@@ -75,9 +75,7 @@ function getFrontEndRedemptionRate(source:Ishfl[]) {
 
   return result
 }
-
-export async function getTransactionRate(fundCode:string) {
-  let r:IRateAtRedemptionWithFrontEndAndLastTenTrend
+export async function getFundId(fundCode:string) {
   const fundid = await axios({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     method: 'get',
@@ -87,6 +85,12 @@ export async function getTransactionRate(fundCode:string) {
       zqdm: fundCode,
     },
   }).then((response) => response.data.content?.fundid)
+  return fundid
+}
+export async function getTransactionRate(fundCode:string) {
+  let r:IRateAtRedemptionWithFrontEndAndLastTenTrend
+
+  const fundid = await getFundId(fundCode)
 
   if (!fundid) {
     r = {

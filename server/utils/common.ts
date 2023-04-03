@@ -48,19 +48,21 @@ export async function useCache<T = any>(
   return result
 }
 
-type retryOption={
+type defaultValueType<Type>=Type extends null ? null : Type
+type retryOption<D>={
   tryCount?:number
   tryId?:string
-  defaultValue?:any
+  defaultValue?:defaultValueType<D>
   interval?:number
 }
-export async function retry<T = any>(
+
+export async function retry<T = any, D = null>(
   // eslint-disable-next-line @typescript-eslint/ban-types
   cacheFn:(...arg:any[])=> T,
   {
     tryCount = 5, tryId, defaultValue = null, interval = 0,
-  }:retryOption = {},
-):Promise<Awaited<T>> {
+  }:retryOption<D> = {},
+):Promise<Awaited<T>|D> {
   let time = 1
   while (time <= tryCount) {
     if (time > 1 && interval > 0) {

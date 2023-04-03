@@ -3,6 +3,7 @@ import { IRateAtRedemptionWithFrontEndAndLastTenTrend } from '../api/transaction
 import { type IClassifiedFund } from '../api/fundDetail'
 import { type IRowOfFundList } from '../api/fundList'
 import { IDescriptionOfFundRank } from '../api/fundRank'
+import { IValuation, IValuationItem } from '../api/valuation'
 
 // export type ICustomFilterOfFundList=(row:IRowOfFundList)=>boolean
 
@@ -32,8 +33,8 @@ export function detailFilter(result:IClassifiedFund):boolean {
 }
 
 export function transactionRateFilter(rateDescription:IRateAtRedemptionWithFrontEndAndLastTenTrend):boolean {
-  const trend = rateDescription.lastTenTrend.slice(7).reduce((prev, { y }) => prev + Math.min(0, y), 0)
-  const isDown = rateDescription.lastTenTrend.slice(-2).every(({ y }) => y < 0) && rateDescription.lastTenTrend.some(({ y }) => y > 0)
+  // const trend = rateDescription.lastTenTrend.slice(7).reduce((prev, { y }) => prev + Math.min(0, y), 0)
+  const isDown = rateDescription.lastTenTrend.slice(-1).every(({ y }) => y < 0) && rateDescription.lastTenTrend.slice(5).some(({ y }) => y > 0)
   if (!(isDown /* && trend <= -1 */)) return false
 
   const day = 30
@@ -61,4 +62,8 @@ export function transactionRateFilter(rateDescription:IRateAtRedemptionWithFront
 export function rankFilter(rank:IDescriptionOfFundRank) {
   return true
   // return rank.rankInfo['近1月']['前百分之'] <= 10 && rank.rankInfo['近1月']['前百分之'] >= 0
+}
+
+export function valuationFilter(valuation:IValuationItem[]) {
+  return valuation[0].y < 0
 }
