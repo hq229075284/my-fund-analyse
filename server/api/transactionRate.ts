@@ -152,7 +152,7 @@ export async function getTransactionRateWithTry(fundCode:string) {
     () => getTransactionRate(fundCode),
     {
       tryId: fundCode,
-      defaultValue: { 前端赎回费率: [] },
+      defaultValue: { fundCode, 前端赎回费率: [] },
     },
   )
   return r

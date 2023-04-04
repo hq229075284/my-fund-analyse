@@ -15,6 +15,7 @@ import {
   getDateStamp, readDataFromFile, getCachePath,
 } from '../utils/common'
 import { writeToMd } from '../utils/md'
+import { filterValuation } from './valuation'
 
 export async function filter() {
   const startTime = Date.now()
@@ -136,6 +137,19 @@ export async function filter() {
   fundRateAtRedemptionList = null
   log.info(`剩余赎回费率条件的基金数据${list.length}条`)
   excel.addSheet({ sheetName: '符合赎回费率条件的基金列表', rows: list })
+
+  let valuations = await filterValuation(list.map((l) => l['基金编码']))
+  list = list.filter((item) => !!valuations[item['基金编码']])
+  if (!list.length) {
+    log.info('符合估值条件的基金列表无数据')
+    excel.done()
+    return
+  }
+  // @ts-ignore 释放内存
+  valuations = null
+
+  log.info(`符合估值条件的基金数据${list.length}条`)
+  excel.addSheet({ sheetName: '符合估值条件的基金列表', rows: list })
 
   log.info('排序完成')
   excel.addSheet({ sheetName: '最终排序后的基金列表', rows: list })

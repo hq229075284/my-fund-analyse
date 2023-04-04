@@ -46,7 +46,7 @@ export async function getValuationByCode(fundCode:string) {
 }
 
 export async function filterValuation(fundCodes:string[]) {
-  const delta = 600
+  const delta = 300
   const result = {} as IValuation
   let successCount = 0
   let failCount = 0
@@ -75,9 +75,9 @@ export async function filterValuation(fundCodes:string[]) {
     if (i + delta < fundCodes.length) {
       await sleep(1000)
     }
-
-    log.info(`估值信息,已成功处理${successCount}条，失败${failCount}条`)
   }
+
+  log.info(`估值信息,已成功处理${successCount}条，失败${failCount}条`)
 
   return result
 }

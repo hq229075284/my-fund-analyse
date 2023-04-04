@@ -1,8 +1,17 @@
 // const fs = require('node:fs')
 // const process = require( 'node:process')
 // const { spawn } = require('node:child_process')
+import process from 'node:process'
 import exportExcel from './excel.js'
-import { filter } from '../api/index'
+import { filter as mainFilter } from '../api/index'
+import { filter as speculateFilter } from '../api/speculate'
+
+let [scriptName, ft] = process.argv.slice(2)
+
+if (!ft) {
+  ft = scriptName
+  scriptName = ''
+}
 
 export async function logToFileWithTableForm(source, filePath) {
 //   const writeStream = fs.createWriteStream('output.txt')
@@ -21,10 +30,16 @@ export async function logToFileWithTableForm(source, filePath) {
   //   childProcess.stdout.on('data', (data) => {
   //     writeStream.write(data)
   //   })
-  await filter()
+
+  if (scriptName === 'sp') {
+    await speculateFilter()
+  } else {
+    await mainFilter()
+  }
   // const tableData =
   // exportExcel(tableData)
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 logToFileWithTableForm()
