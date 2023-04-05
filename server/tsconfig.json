@@ -16,12 +16,20 @@
     "esModuleInterop": true,
     "noEmit": true,
 
-    "allowJs": true
+    "allowJs": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*":[
+        "*"
+      ]
+    }
   },
   "include": ["/**/*.ts"],
   "exclude": ["node_modules"],
 
   "ts-node": {
     // "esm": true
+    "require": ["tsconfig-paths/register"]
   }
 }
