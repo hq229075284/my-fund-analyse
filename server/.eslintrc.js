@@ -18,6 +18,7 @@ module.exports = {
   },
   rules: {
     'no-eval': 'off',
+    'no-loop-func': 'off',
     'func-names': 'off',
     'import/no-extraneous-dependencies': 'off',
     'default-param-last': 'off',
