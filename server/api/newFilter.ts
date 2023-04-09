@@ -24,11 +24,13 @@ import * as ZSfetch from './zhaoshang/fetch';
     return
   }
 
-  const valuation = await ZSfetch.valuationFetch(list.map((item) => item['基金编码']), { name: `${ft}估值` })
-  list = list.filter((item) => valuation[item['基金编码']])
-  log.info(`经估值过滤后，剩余${list.length}条`)
-  if (list.length === 0) {
-    return
+  if (ft !== 'zq') {
+    const valuation = await ZSfetch.valuationFetch(list.map((item) => item['基金编码']), { name: `${ft}估值` })
+    list = list.filter((item) => valuation[item['基金编码']])
+    log.info(`经估值过滤后，剩余${list.length}条`)
+    if (list.length === 0) {
+      return
+    }
   }
 
   log.success(`用时:${(Date.now() - startTime) / 1000}s`)

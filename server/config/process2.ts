@@ -34,15 +34,14 @@ export const tiantianFilter = {
     // const condition3 = +detail.baseInfo.RISKLEVEL <= 5
     const condition3 = true
 
-    const condition4 = detail.baseInfo.maxAndMinInRange['近1年'].currentPercent <= 50
-    // const condition4 = true
+    // const condition4 = detail.baseInfo.maxAndMinInRange['近1年'].currentPercent <= 50
+    const condition4 = true
 
     const { lastTenTrend } = detail.baseInfo
     const condition5 = lastTenTrend.length > 0
     && lastTenTrend.slice(-1).every(({ JZZZL }) => +JZZZL < -1)// 昨天跌
     && lastTenTrend.slice(-1).every(({ JZZZL }) => +JZZZL < 0)// 最近连跌n天
     && lastTenTrend.slice(-5).some(({ JZZZL }) => +JZZZL > 0)// 最近n天有涨过
-
     // const condition5 = true
 
     return condition1 && condition2 && condition3 && condition4 && condition5
