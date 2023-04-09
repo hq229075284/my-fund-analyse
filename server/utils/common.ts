@@ -60,7 +60,7 @@ export async function retry<T = any>(cacheFn:(...arg:any[])=> T, option?:retryOp
 // Specify defaultValue
 export async function retry<T = any, D = any>(cacheFn:(...arg:any[])=> T, option?:retryOption<D>):Promise<Awaited<T>|D>
 export async function retry(
-  cacheFn,
+  cacheFn:any,
   option:retryOption<null> = {},
 ) {
   const {
@@ -72,9 +72,11 @@ export async function retry(
       await sleep(interval)
     }
     try {
+      // log.info(`${tryId},try${time}次`)
       return await cacheFn()
     } catch (e) {
       /*  */
+      // log.error(`捕获到错误，${e.message}`)
     }
     time += 1
   }

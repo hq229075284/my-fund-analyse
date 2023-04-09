@@ -7,6 +7,10 @@ class Log {
     console.log(msg)
   }
 
+  success(msg:string) {
+    console.log(chalk.green(msg))
+  }
+
   error(msg:string) {
     // console.log(msg)
     console.log(chalk.red(msg))

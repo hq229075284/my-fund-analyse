@@ -1,4 +1,5 @@
 /* eslint-disable no-continue */
+// import { IDescriptionOfFundRank } from '@/api/tiantian/tiantianFilter'
 import { IRateAtRedemptionWithFrontEndAndLastTenTrend } from '../api/transactionRate'
 import { type IClassifiedFund } from '../api/fundDetail'
 import { type IRowOfFundList } from '../api/fundList'
@@ -13,7 +14,7 @@ export function listFilter(row:IRowOfFundList):boolean {
   // return row['近1月(%)'] > -0.3
   //   && row['近1周(%)'] >= 0.2
   // && row['日增长(%)'] <= 0.2
-  && !['一年', '两年', '三年', '五年', '3个月', '6个月', '六个月', '港股', '港深', 'FOF', '医药', '医疗', '健康'].find((key:string|RegExp) => {
+  && !['一年', '两年', '三年', '五年', '3个月', '6个月', '六个月', '港股', '港深', 'FOF'/* , '医药', '医疗', '健康' */].find((key:string|RegExp) => {
     if (key instanceof RegExp) {
       return key.test(row['基金名称'])
     }
@@ -63,6 +64,10 @@ export function rankFilter(rank:IDescriptionOfFundRank) {
   return true
   // return rank.rankInfo['近1月']['前百分之'] <= 10 && rank.rankInfo['近1月']['前百分之'] >= 0
 }
+// export function rankFilter(rank:IDescriptionOfFundRank) {
+//   return true
+//   // return rank.rankInfo['近1月']['前百分之'] <= 10 && rank.rankInfo['近1月']['前百分之'] >= 0
+// }
 
 export function valuationFilter(valuation:IValuationItem[]) {
   return valuation[0].y < 0

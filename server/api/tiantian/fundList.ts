@@ -192,6 +192,8 @@ export async function getFundList(...args:Parameters<typeof filter>) {
     return list
   } catch (e) {
     log.error(e.message)
+    // if (e instanceof Error) {
+    // }
     log.error('基金列表获取失败')
     return []
   }
