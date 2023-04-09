@@ -75,8 +75,7 @@ export async function retry(
       // log.info(`${tryId},try${time}次`)
       return await cacheFn()
     } catch (e) {
-      /*  */
-      // log.error(`捕获到错误，${e.message}`)
+      // log.error(`${tryId}捕获到错误，${e.message}`)
     }
     time += 1
   }

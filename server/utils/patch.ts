@@ -39,7 +39,7 @@ interface BasicLoaderOption<FilterReturnType=any, FormatterReturnType=any>{
     /**
      * 是否立即读取缓存文件
      */
-    readImmediately:boolean|undefined
+    // readImmediately:boolean|undefined
     /**
      * 是否强制读取新数据
      */
@@ -132,7 +132,7 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
           },
         ])
         if (response.forceUpdate !== 'Y') {
-          return
+          return resultAfterFilter
         }
         log.info('开始重新读取源数据')
       }
@@ -153,7 +153,7 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
             tryId: fundCode,
             interval: 1000,
             // interval: 1000 + Math.floor(1000 * Math.random()),
-            tryCount: 50,
+            tryCount: 30,
           },
         )
         if (process.env.AT_VPS) {

@@ -132,9 +132,9 @@ function baseInfoFormatter(detail:ResponseData) {
     })
   })
 
-  let FTYPE
-  let SGZT
-  let RISKLEVEL
+  let FTYPE:string
+  let SGZT:string
+  let RISKLEVEL:string
   if (detail.JJXQ?.Datas) {
     ({ FTYPE, SGZT } = detail.JJXQ.Datas);
     ({ RISKLEVEL } = detail.JJXQ.Datas)
@@ -145,6 +145,7 @@ function baseInfoFormatter(detail:ResponseData) {
     RISKLEVEL = '1'
   }
   return {
+    fundCode: detail.fundCode,
     基金类型: FTYPE,
     申购状态: SGZT,
     /**
@@ -159,6 +160,7 @@ function baseInfoFormatter(detail:ResponseData) {
     RISKLEVEL,
     风险等级: `${['低', '中低', '中', '中高', '高'][+RISKLEVEL - 1]}风险`,
     maxAndMinInRange,
+    lastTenTrend: detail.trend.slice(-10),
   }
 }
 

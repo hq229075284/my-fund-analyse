@@ -85,6 +85,9 @@ export interface ResponseData {
       RISKLEVEL: '1'|'2'|'3'|'4'|'5'|'--'
     }
   }
+  /**
+   * 净值、日涨幅变化趋势
+   */
   trend:{
     /**
      * 日期时间，正序，格式：2023-04-07
@@ -95,14 +98,14 @@ export interface ResponseData {
      */
     DWJZ:string
     /**
-     * 日涨幅
+     * 日涨幅，百分比
      */
-    // JZZZL:number
+    JZZZL:string
   }[]
 }
 
 /**
- * 获取基金排名、股票行业数据
+ * 获取基金排名、股票行业、基础信息、净值or日涨幅变化趋势数据
  * @param fundCode 基金编码
  */
 export async function getData(fundCode:string):Promise<ResponseData> {
