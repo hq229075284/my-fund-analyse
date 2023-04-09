@@ -145,8 +145,14 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
           } else {
             payload = message
           }
-          originResult[fundCode] = { fundCode, payload }
-          if (options.filter && options.filter(payload)) {
+          if (withPersistence(options)) {
+            originResult[fundCode] = { fundCode, payload }
+          }
+          if (options.filter) {
+            if (options.filter(payload)) {
+              resultAfterFilter[fundCode] = { fundCode, payload }
+            }
+          } else {
             resultAfterFilter[fundCode] = { fundCode, payload }
           }
         }
