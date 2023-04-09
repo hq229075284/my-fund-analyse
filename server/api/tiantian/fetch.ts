@@ -3,6 +3,9 @@ import formatter, { type IFormattedFundDetail } from '@/api/tiantian/fundDetailF
 import { getCachePath, getDateStamp } from '@/utils/common'
 import { patch } from '@/utils/patch'
 import log from '@/utils/log'
+import process from 'node:process'
+// import fs from 'node:fs'
+// import path from 'node:path'
 import { getFundList } from './fundList'
 
 interface FetchOption{
@@ -37,3 +40,16 @@ export default async function fetch(fundCodes:string[], option:FetchOption) {
   log.success('读取完成')
   log.success(`用时:${(Date.now() - startTime) / 1000}s`)
 })()
+
+process.on('exit', () => {
+  log.error('exit')
+})
+
+process.on('SIGINT', () => {
+  log.error('CTRL+C')
+  // fs.writeFileSync(path.resolve(__dirname, './log1.txt'), '2')
+  process.exit(0)
+}) // CTRL+C
+
+// 必须监听，不然SIGINT的监听无法触发
+process.on('SIGTERM', () => {}) // `kill` command
