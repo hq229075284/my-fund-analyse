@@ -4,6 +4,7 @@ import { mkdirp } from 'mkdirp'
 import log from '@/utils/log'
 import { retry, sleep } from '@/utils/common'
 import prompts from 'prompts'
+import createAjax from '@/utils/ajax'
 
 // function format<T>(arg:T) {
 //   return arg
@@ -45,9 +46,16 @@ interface BasicLoaderOption<FilterReturnType=any, FormatterReturnType=any>{
     forceUpdate:boolean|undefined
   }
 
-  type LoaderOption = FetchLoaderOption|PersistenceLoaderOption
+  type RemoteLoaderOption= PersistenceLoaderOption & {
+    /**
+     * 远程缓存文件地址
+     */
+    remoteFilePath:string
+  }
 
-function withPersistence(option:LoaderOption):option is PersistenceLoaderOption {
+  type LoaderOption = FetchLoaderOption|PersistenceLoaderOption|RemoteLoaderOption
+
+function withPersistence(option:LoaderOption):option is PersistenceLoaderOption|RemoteLoaderOption {
   return 'persistence' in option && option.persistence
 }
 
@@ -60,6 +68,22 @@ interface Result<T=unknown> {
 
 type theWayOfGetData<T=any>=(fundCode:string)=>T
 
+// 从远程读缓存
+async function readResultFromRemoteFile(options:RemoteLoaderOption) {
+  let remoteCacheData
+  try {
+    remoteCacheData = await createAjax({
+      url: options.remoteFilePath,
+      responseType: 'text',
+    }).then((response) => response.data)
+  } catch {
+    log.error(`远程缓存文件获取失败:${options.remoteFilePath}`)
+    return
+  }
+  fs.writeFileSync(options.filePath, remoteCacheData)
+}
+
+// 从本地读缓存
 function readResultFromFile(options:PersistenceLoaderOption) {
   let resultAfterFilter = {} as Result
   const originResult = JSON.parse(fs.readFileSync(options.filePath, { encoding: 'utf8' })) as Result
@@ -87,28 +111,32 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
   let tempCount = 0
 
   if (withPersistence(options)) {
-    if (fs.existsSync(options.filePath) && !options.forceUpdate) {
-      log.info(`开始读取缓存=>${options.filePath}`)
-      try {
-        resultAfterFilter = readResultFromFile(options) as Result<RT>
-        return resultAfterFilter
-      } catch {
-        log.error('缓存读取失败')
-      }
-      const response = await prompts([
-        {
-          type: 'text',
-          name: 'forceUpdate',
-          message: '是否抛弃缓存，重新读取源数据？(Y/n)',
-        },
-      ])
-      if (response.forceUpdate !== 'Y') {
-        return
-      }
-      log.info('开始重新读取源数据')
-    }
-
     mkdirp.sync(path.dirname(options.filePath))
+    if (!options.forceUpdate) {
+      if ('remoteFilePath' in options) {
+        await readResultFromRemoteFile(options)
+      }
+      if (fs.existsSync(options.filePath)) {
+        log.info(`开始读取缓存=>${options.filePath}`)
+        try {
+          resultAfterFilter = readResultFromFile(options) as Result<RT>
+          return resultAfterFilter
+        } catch {
+          log.error('缓存读取失败')
+        }
+        const response = await prompts([
+          {
+            type: 'text',
+            name: 'forceUpdate',
+            message: '是否抛弃缓存，重新读取源数据？(Y/n)',
+          },
+        ])
+        if (response.forceUpdate !== 'Y') {
+          return
+        }
+        log.info('开始重新读取源数据')
+      }
+    }
     fs.writeFileSync(options.filePath, '{')
   }
 
