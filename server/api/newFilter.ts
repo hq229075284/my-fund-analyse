@@ -2,6 +2,7 @@ import { getFundList } from '@/api/tiantian/fundList'
 import createExcel from '@/utils/excel'
 import log from '@/utils/log'
 import { writeToMd } from '@/utils/md'
+import { listFilter } from '@/config/process2'
 import * as TTfetch from './tiantian/fetch'
 import * as ZSfetch from './zhaoshang/fetch';
 
@@ -18,6 +19,10 @@ import * as ZSfetch from './zhaoshang/fetch';
   const tiantian = await TTfetch.defaultFetch(fundCodes, { name: `${ft}` })
   log.lineInfo('开始获取招商数据')
   const zhaoshang = await ZSfetch.defaultFetch(fundCodes, { name: `${ft}` })
+
+  log.success(`获取数据用时:${(Date.now() - startTime) / 1000}s`)
+
+  list = list.filter(listFilter)
   list = list.filter((item) => tiantian[item['基金编码']] && zhaoshang[item['基金编码']])
   log.info(`经条件过滤后，剩余${list.length}条`)
   if (list.length === 0) {
@@ -33,7 +38,7 @@ import * as ZSfetch from './zhaoshang/fetch';
     }
   }
 
-  log.success(`用时:${(Date.now() - startTime) / 1000}s`)
+  log.success(`筛选完成用时:${(Date.now() - startTime) / 1000}s`)
 
   log.table(list)
 

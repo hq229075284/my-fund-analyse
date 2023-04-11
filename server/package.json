@@ -30,7 +30,7 @@
     "url": "node ./utils/parseUrlSearch.mjs",
     "output": "ts-node ./utils/output.ts",
     "pull": "ts-node ./utils/pullData.ts",
-    "sp": "ts-node ./api/speculate.ts",
+    "sp": "ts-node ./api/newFilter.ts",
     "test": "jest"
   },
   "keywords": [],
