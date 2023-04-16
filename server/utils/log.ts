@@ -16,6 +16,10 @@ class Log {
     console.log(chalk.hex('#ffbe0b')(msg))
   }
 
+  title(msg:string) {
+    console.log(chalk.hex('#00b4d8')(`【${msg}】`))
+  }
+
   info(msg:string) {
     // this.logToFile(msg)
     console.log(msg)
