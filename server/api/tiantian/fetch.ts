@@ -1,36 +1,23 @@
 import { getData } from '@/api/tiantian/fundDetail'
-import formatter, { type IFormattedFundDetail } from '@/api/tiantian/fundDetailFormatter'
-import { getCachePath, getDateStamp } from '@/utils/common'
+import { type IFormattedFundDetail } from '@/api/tiantian/fundDetailFormatter'
+// import { getCachePath, getDateStamp } from '@/utils/common'
 import { patch } from '@/utils/patch'
-import * as myProcess from '@/config/process2'
-import log from '@/utils/log'
-import process from 'node:process'
+// import log from '@/utils/log'
+// import process from 'node:process'
 // import fs from 'node:fs'
 // import path from 'node:path'
-import { getFundList } from './fundList'
+import config from '@/config/tiantian'
+// import { getFundList } from './fundList'
 
 interface FetchOption{
-  name:string
+  name:string,
 }
 
-const prefix = '(天天基金)'
-
-export async function defaultFetch(fundCodes:string[], option:FetchOption) {
-  const stamp = getDateStamp()
-
+export async function defaultFetch(fundCodes:string[], option?:FetchOption) {
   const result = await patch<IFormattedFundDetail>(
     fundCodes,
     getData,
-    {
-      name: `${prefix}${option.name}`,
-      formatter,
-      filter: myProcess.tiantianFilter.defaultFilter,
-      persistence: true,
-      filePath: getCachePath(`${prefix}${option.name}数据${stamp}`),
-      forceUpdate: false,
-      // readImmediately: true,
-
-    },
+    config.default,
   )
 
   return result

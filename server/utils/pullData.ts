@@ -1,68 +1,84 @@
-import { getFundList, IFilterParams } from '../api/fundList'
-import { createWriteCacheForRank } from '../api/fundRank'
-import { createWriteCacheForDetail } from '../api/fundDetail'
-import { createWriteCacheForRedeem } from '../api/transactionRate'
+import { FundType, getFundList } from '@/api/tiantian/fundList'
+import * as TTfetch from '@/api/tiantian/fetch'
+import * as ZSfetch from '@/api/zhaoshang/fetch'
+import dayjs from 'dayjs'
+import path from 'node:path'
+import fs from 'node:fs'
+import { REMOTE_UPLOAD_URL } from '@/config/env'
+import tiantianConfig from '@/config/tiantian'
+import zhaoshangConfig from '@/config/zhaoshang'
+import FormData from 'form-data'
 import log from './log'
 import {
-  getDateStamp, getCachePath, readDataFromFile,
+  getDateStamp, getCommandLineArgs, getExecFileFullPath, DATE_FORMAT, getCachePath,
 } from './common'
+import createAjax from './ajax'
 
-async function run() {
-  const startTime = Date.now()
-  const ft = (process.argv.slice(2)[0] || 'zq') as IFilterParams['requestParams']['ft']
-  const stamp = getDateStamp()
-
-  // 获取符合条件的基金列表
-  const list = await getFundList({ requestParams: { ft } })
-
-  if (!list.length) {
-    log.info('基金列表初始无数据')
-    process.exit(1)
+export async function removeOutdateCacheFiles() {
+  const timeStr = getDateStamp()
+  const today = dayjs(timeStr.replace(/\|/g, ':'))
+  const retainDays = [] as string[]
+  const lastDays = 3
+  for (let i = lastDays - 1; i >= 0; i -= 1) {
+    retainDays.push(today.clone().subtract(i, 'day').format(DATE_FORMAT))
   }
-
-  log.info(`天天基金获取基金数据${list.length}条`)
-
-  // log.info('开始获取排名数据')
-  // await pullRankDataToFile(list.map((l) => l['基金编码']), getCachePath(`${ft}排名数据${stamp}`))
-
-  await readDataFromFile(
-    '排行数据',
-    getCachePath(`${ft}排名数据${stamp}`),
-    createWriteCacheForRank(list.map((l) => l['基金编码'])),
-    true,
-  )
-
-  await readDataFromFile(
-    '详情数据',
-    getCachePath(`${ft}详情数据${stamp}`),
-    createWriteCacheForDetail(list.map((l) => l['基金编码'])),
-    true,
-  )
-
-  await readDataFromFile(
-    '赎回数据',
-    getCachePath(`${ft}赎回数据${stamp}`),
-    createWriteCacheForRedeem(list.map((l) => l['基金编码'])),
-    true,
-  )
-
-  // log.info('开始获取基金详情数据')
-  // await useCache(
-  //   () => getDetails(list.map((l) => l['基金编码'])),
-  //   {
-  //     cacheName: `${ft}基金详情数据${getDateStamp()}`,
-  //   },
-  // )
-
-  // log.info('开始获取赎回数据')
-  // await useCache(
-  //   () => patchTransactionRateWithTry(list.map((l) => l['基金编码'])),
-  //   {
-  //     cacheName: `${ft}赎回数据${getDateStamp()}`,
-  //   },
-  // )
-
-  log.info(`耗时${(Date.now() - startTime) / 1000}s`)
+  const cacheDir = path.resolve(__dirname, '../cache/')
+  if (!fs.existsSync(cacheDir)) return
+  try {
+    const filenames = await fs.promises.readdir(cacheDir)
+    for (let i = 0; i < filenames.length; i += 1) {
+      if (!retainDays.some((str) => filenames[i].includes(str))) {
+        const filePath = path.resolve(cacheDir, filenames[i])
+        await fs.promises.unlink(filePath)
+        log.success(`删除=>${filePath}`)
+      }
+    }
+  } catch (e) {
+    log.error(`removeOutdateCacheFiles:${e.message}`)
+  }
 }
 
-run()
+async function uploadCache() {
+  const tiantianFileCachePath = tiantianConfig.default.filePath
+  const zhaoshangFileCachePath = zhaoshangConfig.default.filePath
+  const formData = new FormData()
+  formData.append('uploads', fs.createReadStream(tiantianFileCachePath))
+  formData.append('uploads', fs.createReadStream(zhaoshangFileCachePath))
+  await createAjax({
+    url: REMOTE_UPLOAD_URL,
+    method: 'post',
+    headers: formData.getHeaders(),
+    data: formData,
+  })
+  log.success('上传成功')
+}
+
+export async function syncData() {
+  await removeOutdateCacheFiles()
+
+  const startTime = Date.now()
+
+  const ft = (getCommandLineArgs()[0] || 'pg') as FundType
+  const list = await getFundList({ requestParams: { ft } })
+  log.success(`${ft}数据${list.length}条`)
+
+  const fundCodes = list.map((item) => item['基金编码'])
+
+  log.lineInfo('开始获取天天基金、招商数据')
+  const [tiantian, zhaoshang] = await Promise.all([
+    TTfetch.defaultFetch(fundCodes),
+    ZSfetch.defaultFetch(fundCodes),
+  ])
+
+  log.info(`获取数据耗时${(Date.now() - startTime) / 1000}s`)
+
+  if (process.env.AT_VPS) {
+    await uploadCache()
+  }
+
+  return { tiantian, zhaoshang }
+}
+
+if (getExecFileFullPath().includes('pullData')) {
+  syncData()
+}

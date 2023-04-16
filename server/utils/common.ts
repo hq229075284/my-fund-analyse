@@ -3,6 +3,7 @@ import { mkdirp } from 'mkdirp'
 import path from 'node:path'
 import fs from 'node:fs'
 import axios from 'axios'
+import { argv } from 'node:process'
 import log from './log'
 
 export async function sleep(t = 1000) {
@@ -85,9 +86,10 @@ export async function retry(
   return defaultValue
 }
 
+export const DATE_FORMAT = 'YYYY-MM-DD 21|00|00'
 export function getDateStamp() {
   const now = dayjs()
-  const format = 'YYYY-MM-DD 21-00-00'
+  const format = DATE_FORMAT
   const useYesterday = now.isBefore(dayjs().hour(21).minute(0).second(0).millisecond(0))
   if (useYesterday) {
     return now.subtract(1, 'day').format(format)
@@ -144,4 +146,12 @@ export async function readDataFromFile(
   const data = await fs.promises.readFile(localPath, { encoding: 'utf8' })
   log.lineInfo(`end ${type}`)
   return JSON.parse(data)
+}
+
+export function getCommandLineArgs() {
+  return argv.slice(2)
+}
+
+export function getExecFileFullPath() {
+  return argv[1]
 }

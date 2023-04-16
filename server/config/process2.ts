@@ -12,7 +12,7 @@ export function listFilter(row:IRowOfFundList):boolean {
   // return row['近1月(%)'] > -0.3
   && row['近1周(%)'] < 2
   // && row['日增长(%)'] <= 0.2
-  && !['一年', '两年', '三年', '五年', '3个月', '6个月', '9个月', '12个月', '1年', '2年', '六个月', /* '港股', */ '港深', '沪深', 'FOF'/* , '医药', '医疗', '健康' */].find((key:string|RegExp) => {
+  && !['一年', '两年', '三年', '五年', '3个月', '6个月', '9个月', '12个月', '18个月', '1年', '2年', '六个月', /* '港股', */ '港深', '沪深', 'FOF'/* , '医药', '医疗', '健康' */].find((key:string|RegExp) => {
     if (key instanceof RegExp) {
       return key.test(row['基金名称'])
     }

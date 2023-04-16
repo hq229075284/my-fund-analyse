@@ -15,13 +15,25 @@ interface BasicLoaderOption<FilterReturnType=any, FormatterReturnType=any>{
      * 加载器名称
      */
   name:string
+  /**
+   * 是否展示log
+   */
+  verbose?:boolean
+  /**
+   * 批量条数
+   */
   delta?:number
   /**
      * 过滤器
-     * @param arg 接口返回的数据
+     * @param arg 接口返回的数据或格式化后的数据
      * @returns 过滤后的结果
      */
   filter?:(arg:any)=>FilterReturnType
+  /**
+   * 格式化接口返回值
+   * @param arg 接口返回的数据
+   * @returns 格式化后的结果
+   */
   formatter?:(arg:any)=>FormatterReturnType
 }
 
@@ -53,7 +65,7 @@ interface BasicLoaderOption<FilterReturnType=any, FormatterReturnType=any>{
     remoteFilePath:string
   }
 
-  type LoaderOption = FetchLoaderOption|PersistenceLoaderOption|RemoteLoaderOption
+export type LoaderOption = FetchLoaderOption|PersistenceLoaderOption|RemoteLoaderOption
 
 function withPersistence(option:LoaderOption):option is PersistenceLoaderOption|RemoteLoaderOption {
   return 'persistence' in option && option.persistence
@@ -81,6 +93,7 @@ async function readResultFromRemoteFile(options:RemoteLoaderOption) {
     return
   }
   fs.writeFileSync(options.filePath, remoteCacheData)
+  log.success(`远程缓存文件获取成功，缓存到=>${options.filePath}`)
 }
 
 // 从本地读缓存
@@ -112,31 +125,46 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
 
   if (withPersistence(options)) {
     mkdirp.sync(path.dirname(options.filePath))
-    if (!options.forceUpdate) {
-      if ('remoteFilePath' in options) {
-        await readResultFromRemoteFile(options)
-      }
+    if (!options.forceUpdate) { // 尝试读缓存
       if (fs.existsSync(options.filePath)) {
-        log.info(`开始读取缓存=>${options.filePath}`)
+        log.info(`开始读取本地缓存=>${options.filePath}`)
         try {
           resultAfterFilter = readResultFromFile(options) as Result<RT>
+          // log.success('本地缓存读取成功')
           return resultAfterFilter
         } catch {
-          log.error('缓存读取失败')
+          log.error(`读取本地缓存失败=>${options.filePath}`)
         }
-        const response = await prompts([
-          {
-            type: 'text',
-            name: 'forceUpdate',
-            message: '是否抛弃缓存，重新读取源数据？(Y/n)',
-          },
-        ])
-        if (response.forceUpdate !== 'Y') {
-          return resultAfterFilter
+      }
+      if ('remoteFilePath' in options) {
+        log.info(`开始读取远程缓存=>${options.remoteFilePath}`)
+        await readResultFromRemoteFile(options)
+        if (fs.existsSync(options.filePath)) {
+          log.info(`开始读取本地缓存=>${options.filePath}`)
+          try {
+            resultAfterFilter = readResultFromFile(options) as Result<RT>
+            // log.success('本地缓存读取成功')
+            return resultAfterFilter
+          } catch {
+            log.error(`读取本地缓存失败=>${options.filePath}`)
+          }
         }
-        log.info('开始重新读取源数据')
+        // const response = await prompts([
+        //   {
+        //     type: 'text',
+        //     name: 'forceUpdate',
+        //     message: '是否抛弃缓存，重新读取源数据？(Y/n)',
+        //   },
+        // ])
+        // if (response.forceUpdate !== 'Y') {
+        //   return resultAfterFilter
+        // }
+        // log.info(`开始重新读取${options.name}源数据`)
       }
     }
+
+    // 读源数据
+    log.info(`开始读取${options.name}源数据`)
     fs.writeFileSync(options.filePath, '{')
   }
 
@@ -166,7 +194,9 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
         }
         processedCount += 1
         if (processedCount % 20 === 0 || total - processedCount < 10) {
-          log.info(`处理${tempCount}条,已请求到${processedCount}条，共${total}条`)
+          if (options.verbose) {
+            log.info(`处理${tempCount}条,已请求到${processedCount}条，共${total}条`)
+          }
         }
         if (message) {
           let payload
@@ -191,7 +221,7 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
 
     if (withPersistence(options)) {
       await fs.promises.appendFile(options.filePath, `${i > 0 ? ',' : ''}${JSON.stringify(originResult).replace(/^{|}$/g, '')}`)
-      log.success('写入')
+      // log.success('写入')
     }
 
     if (i + delta < fundCodes.length) {

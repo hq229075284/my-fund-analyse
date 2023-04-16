@@ -66,6 +66,8 @@ const Row = (function Row(itemStr:string) {
   return this
 } as unknown as IRowOfFundListConstructor)
 
+export type FundType='hh'|'zq'|'pg'|'gp'
+
 export interface IFilterParams{
   requestParams?:{
     /**
@@ -75,7 +77,7 @@ export interface IFilterParams{
      * pg    偏股
      * gp    股票
      */
-    ft?:'hh'|'zq'|'pg'|'gp'
+    ft?:FundType
     /**
      * 排序字段
      * r     日增长

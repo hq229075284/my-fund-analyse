@@ -1,51 +1,38 @@
 import {
   getData, getValuation, type IValuationItem,
 } from '@/api/zhaoshang/fundDetail'
-import formatter, { type IFormattedFundDetail, valuationFormatter } from '@/api/zhaoshang/fundDetailFormatter'
-import { getCachePath, getDateStamp } from '@/utils/common'
+import /* formatter,  */{ type IFormattedFundDetail/* , valuationFormatter  */ } from '@/api/zhaoshang/fundDetailFormatter'
+// import { getCachePath, getDateStamp } from '@/utils/common'
 import { patch } from '@/utils/patch'
-import * as myProcess from '@/config/process2'
-import log from '@/utils/log'
-import process from 'node:process'
+// import * as myProcess from '@/config/process2'
+// import log from '@/utils/log'
+// import process from 'node:process'
 // import fs from 'node:fs'
 // import path from 'node:path'
-import { getFundList } from '../tiantian/fundList'
+import config from '@/config/zhaoshang'
+// import { REMOTE_FILEPATH_PREFIX } from '@/config'
+// import { getFundList } from '../tiantian/fundList'
 
 interface FetchOption{
-  name:string
+  name:string,
+  verbose:boolean
 }
 
-const prefix = '(招商)'
-
-export async function defaultFetch(fundCodes:string[], option:FetchOption) {
-  const stamp = getDateStamp()
-
+export async function defaultFetch(fundCodes:string[], option?:FetchOption) {
   const result = await patch<IFormattedFundDetail>(
     fundCodes,
     getData,
-    {
-      name: `${prefix}${option.name}`,
-      formatter,
-      filter: myProcess.zhaoshangFilter.defaultFilter,
-      persistence: true,
-      filePath: getCachePath(`${prefix}${option.name}数据${stamp}`),
-      forceUpdate: false,
-      // readImmediately: true,
-    },
+    config.default,
   )
 
   return result
 }
 
-export async function valuationFetch(fundCodes:string[], option:FetchOption) {
+export async function valuationFetch(fundCodes:string[], option?:FetchOption) {
   const result = await patch<IValuationItem[]>(
     fundCodes,
     getValuation,
-    {
-      name: `${prefix}${option.name}`,
-      formatter: valuationFormatter,
-      filter: myProcess.zhaoshangFilter.valuationFilter,
-    },
+    config.valuation,
   )
 
   return result
