@@ -11,8 +11,13 @@ class Log {
     fs.appendFileSync(path.resolve(__dirname, './log.txt'), content)
   }
 
+  debug(msg:string) {
+    this.logToFile(`[debug]=>${msg}`)
+    console.log(chalk.hex('#ffbe0b')(msg))
+  }
+
   info(msg:string) {
-    this.logToFile(msg)
+    // this.logToFile(msg)
     console.log(msg)
   }
 

@@ -20,7 +20,7 @@ export const fallback:LoaderOption = {
   persistence: true,
   filePath: getCachePath(`${name}数据${stamp}`),
   forceUpdate: false,
-  verbose: false,
+  verbose: true,
   remoteFilePath: `${REMOTE_FILEPATH_PREFIX}/uploadData/${name}数据${stamp}.json`,
 }
 

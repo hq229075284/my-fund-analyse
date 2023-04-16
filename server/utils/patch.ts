@@ -195,7 +195,7 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
         processedCount += 1
         if (processedCount % 20 === 0 || total - processedCount < 10) {
           if (options.verbose) {
-            log.info(`处理${tempCount}条,已请求到${processedCount}条，共${total}条`)
+            log.info(`${options.name}: 处理${tempCount}条,已请求到${processedCount}条，共${total}条`)
           }
         }
         if (message) {
@@ -233,7 +233,7 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
     await fs.promises.appendFile(options.filePath, '}')
   }
 
-  log.info(`${options.name}信息,已成功处理${successCount}条，失败${failCount}条`)
+  log.debug(`${options.name}信息: 已成功处理${successCount}条，失败${failCount}条`)
 
   // if (withPersistence(options)) {
   //   resultAfterFilter = readResultFromFile(options)

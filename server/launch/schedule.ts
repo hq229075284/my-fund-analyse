@@ -6,21 +6,17 @@ import dayjs from 'dayjs'
 
 async function fetchAll() {
   const fundTypes:FundType[] = ['hh', 'gp', 'pg', 'zq']
+  log.debug(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步开始`)
   for (let i = 0; i < fundTypes.length; i += 1) {
     process.env.fundType = fundTypes[i]
     await syncData()
   }
+  log.debug(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步结束`)
 }
 
-log.info(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步开始`)
 fetchAll()
-log.info(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步结束`)
 
-schedule.scheduleJob('0 0 2 * * *', async () => {
-  log.info(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步开始`)
-  await fetchAll()
-  log.info(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步结束`)
-})
+schedule.scheduleJob('0 0 2 * * *', fetchAll)
 
 process.on('SIGINT', () => {
   schedule.gracefulShutdown()

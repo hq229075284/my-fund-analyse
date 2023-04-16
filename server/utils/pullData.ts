@@ -70,7 +70,7 @@ export async function syncData() {
     ZSfetch.defaultFetch(fundCodes),
   ])
 
-  log.info(`获取数据耗时${(Date.now() - startTime) / 1000}s`)
+  log.debug(`获取数据耗时${(Date.now() - startTime) / 1000}s`)
 
   if (process.env.NODE_ENV === 'production') {
     await uploadCache()
