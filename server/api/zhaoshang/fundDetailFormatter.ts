@@ -14,7 +14,7 @@ interface Irange{
    */
   lt?:number
 }
-interface IRateAtRedemption{
+export interface IRateAtRedemption{
   /**
    * 赎回费率对应的时间区间，如：0日≤持有天数<7日
    */

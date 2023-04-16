@@ -2,7 +2,7 @@ import { getFundList } from '@/api/tiantian/fundList'
 import createExcel from '@/utils/excel'
 import log from '@/utils/log'
 import { writeToMd } from '@/utils/md'
-import { listFilter } from '@/config/process2'
+import { listFilter } from '@/config/filters/index'
 // import * as TTfetch from '@/api/tiantian/fetch'
 import * as ZSfetch from '@/api/zhaoshang/fetch'
 import { syncData } from '@/utils/pullData'
@@ -26,7 +26,13 @@ async function run() {
   // log.success(`获取数据用时:${(Date.now() - startTime) / 1000}s`)
 
   list = list.filter(listFilter)
-  list = list.filter((item) => tiantian[item['基金编码']] && zhaoshang[item['基金编码']])
+  list = list.filter((item) => {
+    if (tiantian[item['基金编码']] && zhaoshang[item['基金编码']]) {
+      item['基金类型'] = tiantian[item['基金编码']].payload.baseInfo['基金类型']
+      return true
+    }
+    return false
+  })
   log.info(`经条件过滤后，剩余${list.length}条`)
   if (list.length === 0) {
     return

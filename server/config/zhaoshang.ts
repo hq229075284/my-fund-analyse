@@ -1,9 +1,9 @@
 import formatter, { valuationFormatter } from '@/api/zhaoshang/fundDetailFormatter'
-import * as myProcess from '@/config/process2'
 import {
   getCachePath, getDateStamp, getFundType,
 } from '@/utils/common'
 import { LoaderOption } from '@/utils/patch'
+import * as myProcess from '@/config/filters/index'
 import { FundTypeEnum } from './enum'
 import { REMOTE_FILEPATH_PREFIX } from './env'
 
@@ -17,7 +17,7 @@ const name = prefix + FundTypeEnum[fundType]
 export const fallback:LoaderOption = {
   name,
   formatter,
-  filter: myProcess.zhaoshangFilter.defaultFilter,
+  filter: myProcess.default.排名靠前的基金.transactionFilter,
   persistence: true,
   filePath: getCachePath(`${name}数据${stamp}`),
   forceUpdate: false,
@@ -28,7 +28,7 @@ export const fallback:LoaderOption = {
 export const valuation:LoaderOption = {
   name,
   formatter: valuationFormatter,
-  filter: myProcess.zhaoshangFilter.valuationFilter,
+  filter: myProcess.default.排名靠前的基金.valuationFilter,
 }
 
 export default {

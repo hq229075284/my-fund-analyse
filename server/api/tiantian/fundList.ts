@@ -4,6 +4,7 @@ import log from '@/utils/log'
 export interface IRowOfFundList {
   '基金编码':string
   '基金名称':string
+  '基金类型':string
   '统计日期':string
   '单位净值':number
   '日增长(%)':number
@@ -53,6 +54,7 @@ const Row = (function Row(itemStr:string) {
   ] = itemStr.split('|')
   this['基金编码'] = code
   this['基金名称'] = name
+  this['基金类型'] = ''
   this['统计日期'] = currentTime
   this['单位净值'] = Number(unitValue)
   this['日增长(%)'] = Number(dayIncrease)

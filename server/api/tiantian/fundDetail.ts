@@ -60,7 +60,8 @@ export interface ResponseData {
       /**
        * 基金类型
        */
-      FTYPE:string,
+      // FTYPE:'混合型-偏股'|'混合型-偏债'|'混合型-灵活'|'股票型'|'指数型-股票'|'债券型-混合债'|'债券型-可转债'
+      FTYPE:string
       /**
        * 申购状态，'开放申购'
        */

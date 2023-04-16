@@ -1,5 +1,6 @@
 import formatter from '@/api/tiantian/fundDetailFormatter'
-import * as myProcess from '@/config/process2'
+import * as myProcess from '@/config/filters/index'
+// import * as myProcess from '@/config/process2'
 import {
   getCachePath, getDateStamp, getFundType,
 } from '@/utils/common'
@@ -17,7 +18,7 @@ const name = prefix + FundTypeEnum[fundType]
 export const fallback:LoaderOption = {
   name,
   formatter,
-  filter: myProcess.tiantianFilter.defaultFilter,
+  filter: myProcess.default.排名靠前的基金.tiantianFilter,
   persistence: true,
   filePath: getCachePath(`${name}数据${stamp}`),
   forceUpdate: false,

@@ -14,12 +14,13 @@ enum nameMap {
   'JN' = '今年以来',
   'LN' = '成立以来',
 }
-type categories='近1周'|'近1月'|'近3月'|'近6月'|'近1年'|'近2年'|'近3年'|'近5年'|'今年以来'|'成立以来'
+export type categories='近1周'|'近1月'|'近3月'|'近6月'|'近1年'|'近2年'|'近3年'|'近5年'|'今年以来'|'成立以来'
 export type IDescriptionOfFundRank = {
   [key in categories]:{
     类别:categories
     排名:number
     总数:number
+    涨跌幅:number
     前百分之:number|''
   }
 }
@@ -32,6 +33,7 @@ function rankFormatter(detail:ResponseData) {
         类别: nameMap[item.title],
         排名: Number(item.rank),
         总数: Number(item.sc),
+        涨跌幅: Number(item.syl),
         前百分之: Number.isNaN((+item.rank) / (+item.sc) * 100)
           ? '' as const
           : (+item.rank) / (+item.sc) * 100,
@@ -45,6 +47,7 @@ function rankFormatter(detail:ResponseData) {
         类别: title,
         排名: 9999,
         总数: 9999,
+        涨跌幅: -99,
         前百分之: 100,
       }
       collection[title] = description
