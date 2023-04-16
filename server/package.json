@@ -9,6 +9,7 @@
     "http-server": "^14.1.1",
     "http-server-upload": "^2.2.2",
     "mkdirp": "^2.1.5",
+    "node-schedule": "^2.1.1",
     "prompts": "^2.4.2",
     "typescript": "^4.9.5",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.2/xlsx-0.19.2.tgz"
@@ -34,7 +35,7 @@
     "url": "node ./utils/parseUrlSearch.mjs",
     "output": "ts-node ./utils/output.ts",
     "pull": "ts-node ./utils/pullData.ts",
-    "pull:prod": "cross-env NODE_ENV=production ts-node ./utils/pullData.ts",
+    "pull:prod": "cross-env NODE_ENV=production ts-node ./launch/schedule.ts",
     "launch": "ts-node ./launch/run.ts",
     "download-server": "http-server -p 9001 -c-1 --cors ./uploadData",
     "upload-server": "http-server-upload --port=9000 --path-regexp='/.*/' --enable-folder-creation --upload-tmp-dir=./ ./uploadData",
