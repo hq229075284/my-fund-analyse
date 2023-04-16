@@ -72,7 +72,7 @@ export async function syncData() {
 
   log.info(`获取数据耗时${(Date.now() - startTime) / 1000}s`)
 
-  if (process.env.AT_VPS) {
+  if (process.env.NODE_ENV === 'production') {
     await uploadCache()
   }
 

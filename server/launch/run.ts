@@ -5,9 +5,10 @@ import { writeToMd } from '@/utils/md'
 import { listFilter } from '@/config/process2'
 // import * as TTfetch from '@/api/tiantian/fetch'
 import * as ZSfetch from '@/api/zhaoshang/fetch'
-import { syncData } from '@/utils/pullData';
+import { syncData } from '@/utils/pullData'
+import { getExecFileFullPath } from '@/utils/common'
 
-(async () => {
+async function run() {
   const excel = createExcel()
 
   const ft = (process.argv.slice(2)[0] || 'pg') as 'hh'|'zq'|'pg'|'gp'
@@ -48,4 +49,10 @@ import { syncData } from '@/utils/pullData';
   excel.done()
 
   writeToMd(list)
-})()
+}
+
+if (getExecFileFullPath().includes('launch/run')) {
+  run()
+}
+
+export default run

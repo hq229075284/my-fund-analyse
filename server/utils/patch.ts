@@ -184,9 +184,9 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
             tryCount: 30,
           },
         )
-        if (process.env.AT_VPS) {
-          log.info(`${fundCode},message:${message}`)
-        }
+        // if (process.env.AT_VPS) {
+        //   log.info(`${fundCode},message:${message}`)
+        // }
         if (!message) {
           failCount += 1
         } else {
