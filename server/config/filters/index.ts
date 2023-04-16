@@ -14,7 +14,7 @@ export function listFilter(row:IRowOfFundList):boolean {
       return row['基金名称'].includes(key)
     })
     && row['日增长(%)'] !== 0
-    // && row['手续费'] === 0
+    && row['手续费'] === 0
     // && row['近1周(%)'] - row['日增长(%)'] >= 0.5
     // && row['近6月(%)'] < 0
 }
