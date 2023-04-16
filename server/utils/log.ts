@@ -1,9 +1,18 @@
 /* eslint-disable no-console */
 /* eslint-disable class-methods-use-this */
 import chalk from 'chalk'
+import dayjs from 'dayjs'
+import fs from 'node:fs'
+import path from 'node:path'
 
 class Log {
+  private logToFile(msg:string) {
+    const content = `【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】${msg}\n`
+    fs.appendFileSync(path.resolve(__dirname, './log.txt'), content)
+  }
+
   info(msg:string) {
+    this.logToFile(msg)
     console.log(msg)
   }
 
@@ -13,6 +22,7 @@ class Log {
 
   error(msg:string) {
     // console.log(msg)
+    this.logToFile(msg)
     console.log(chalk.red(msg))
   }
 
