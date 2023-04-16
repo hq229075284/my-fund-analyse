@@ -44,13 +44,18 @@ async function uploadCache() {
   const formData = new FormData()
   formData.append('uploads', fs.createReadStream(tiantianFileCachePath))
   formData.append('uploads', fs.createReadStream(zhaoshangFileCachePath))
-  await createAjax({
-    url: REMOTE_UPLOAD_URL,
-    method: 'post',
-    headers: formData.getHeaders(),
-    data: formData,
-  })
-  log.success('上传成功')
+  try {
+    await createAjax({
+      url: REMOTE_UPLOAD_URL,
+      method: 'post',
+      headers: formData.getHeaders(),
+      data: formData,
+      timeout: 10 * 60 * 1000,
+    })
+    log.success('上传成功')
+  } catch (e) {
+    log.error(`上传失败=>${e.message}`)
+  }
 }
 
 export async function syncData() {
@@ -58,7 +63,7 @@ export async function syncData() {
 
   const startTime = Date.now()
 
-  const ft = (getCommandLineArgs()[0] || 'pg') as FundType
+  const ft = (getCommandLineArgs()[0] || process.env.fundType || 'pg') as FundType
   const list = await getFundList({ requestParams: { ft } })
   log.success(`${ft}数据${list.length}条`)
 
