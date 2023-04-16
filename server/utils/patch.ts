@@ -90,10 +90,11 @@ async function readResultFromRemoteFile(options:RemoteLoaderOption) {
     }).then((response) => response.data)
   } catch {
     log.error(`远程缓存文件获取失败:${options.remoteFilePath}`)
-    return
+    return false
   }
   fs.writeFileSync(options.filePath, remoteCacheData)
   log.success(`远程缓存文件获取成功，缓存到=>${options.filePath}`)
+  return true
 }
 
 // 从本地读缓存
@@ -127,7 +128,7 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
     mkdirp.sync(path.dirname(options.filePath))
     if (!options.forceUpdate) { // 尝试读缓存
       if (fs.existsSync(options.filePath)) {
-        log.info(`开始读取本地缓存=>${options.filePath}`)
+        log.debug(`开始读取本地缓存=>${options.filePath}`)
         try {
           resultAfterFilter = readResultFromFile(options) as Result<RT>
           // log.success('本地缓存读取成功')
@@ -137,10 +138,10 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
         }
       }
       if ('remoteFilePath' in options) {
-        log.info(`开始读取远程缓存=>${options.remoteFilePath}`)
-        await readResultFromRemoteFile(options)
-        if (fs.existsSync(options.filePath)) {
-          log.info(`开始读取本地缓存=>${options.filePath}`)
+        log.debug(`开始读取远程缓存=>${options.remoteFilePath}`)
+        const downloadComplete = await readResultFromRemoteFile(options)
+        if (downloadComplete) {
+          log.debug(`开始读取本地缓存=>${options.filePath}`)
           try {
             resultAfterFilter = readResultFromFile(options) as Result<RT>
             // log.success('本地缓存读取成功')

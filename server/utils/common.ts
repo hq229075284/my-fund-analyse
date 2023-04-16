@@ -4,6 +4,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import axios from 'axios'
 import { argv } from 'node:process'
+import { type FundType } from '@/api/tiantian/fundList'
 import log from './log'
 
 export async function sleep(t = 1000) {
@@ -150,6 +151,10 @@ export async function readDataFromFile(
 
 export function getCommandLineArgs() {
   return argv.slice(2)
+}
+
+export function getFundType() {
+  return (getCommandLineArgs()[0] || process.env.fundType || 'pg') as FundType
 }
 
 export function getExecFileFullPath() {

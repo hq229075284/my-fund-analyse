@@ -1,14 +1,15 @@
 import formatter, { valuationFormatter } from '@/api/zhaoshang/fundDetailFormatter'
 import * as myProcess from '@/config/process2'
-import { getCachePath, getCommandLineArgs, getDateStamp } from '@/utils/common'
-import { FundType } from '@/api/tiantian/fundList'
+import {
+  getCachePath, getDateStamp, getFundType,
+} from '@/utils/common'
 import { LoaderOption } from '@/utils/patch'
 import { FundTypeEnum } from './enum'
 import { REMOTE_FILEPATH_PREFIX } from './env'
 
 const stamp = getDateStamp()
 
-const fundType = (getCommandLineArgs()[0] || 'pg') as FundType
+const fundType = getFundType()
 
 const prefix = '(招商)'
 const name = prefix + FundTypeEnum[fundType]

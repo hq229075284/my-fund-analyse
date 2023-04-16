@@ -65,7 +65,7 @@ export async function syncData() {
 
   const ft = (getCommandLineArgs()[0] || process.env.fundType || 'pg') as FundType
   const list = await getFundList({ requestParams: { ft } })
-  log.success(`${ft}数据${list.length}条`)
+  log.title(`${ft}数据${list.length}条`)
 
   const fundCodes = list.map((item) => item['基金编码'])
 

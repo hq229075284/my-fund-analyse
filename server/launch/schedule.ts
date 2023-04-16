@@ -3,22 +3,23 @@ import schedule from 'node-schedule'
 import { FundType } from '@/api/tiantian/fundList'
 import log from '@/utils/log'
 import dayjs from 'dayjs'
-import { exec } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { FundTypeEnum } from '@/config/enum'
 
 function createChildProcess() {
   return new Promise((resolve) => {
-    exec('npm run pull:prod', (err) => {
-      if (err) {
-        log.error(err?.message)
-      }
+    const child = spawn('npm run pull:prod', {
+      stdio: 'inherit',
+      shell: true,
+    })
+    child.on('exit', () => {
       resolve('')
     })
   })
 }
 
 async function fetchAll() {
-  const fundTypes:FundType[] = ['hh', 'gp', 'pg', 'zq']
+  const fundTypes:FundType[] = ['pg', 'hh', 'gp', 'zq']
   log.debug(`【${dayjs().format('YYYY-MM-DD HH:mm:ss')}】schedule同步开始`)
   for (let i = 0; i < fundTypes.length; i += 1) {
     process.env.fundType = fundTypes[i]
