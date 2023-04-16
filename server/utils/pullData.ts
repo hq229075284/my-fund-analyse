@@ -1,4 +1,4 @@
-import { FundType, getFundList } from '@/api/tiantian/fundList'
+import { getFundList } from '@/api/tiantian/fundList'
 import * as TTfetch from '@/api/tiantian/fetch'
 import * as ZSfetch from '@/api/zhaoshang/fetch'
 import dayjs from 'dayjs'
@@ -10,7 +10,7 @@ import zhaoshangConfig from '@/config/zhaoshang'
 import FormData from 'form-data'
 import log from './log'
 import {
-  getDateStamp, getCommandLineArgs, getExecFileFullPath, DATE_FORMAT, getCachePath,
+  getDateStamp, getExecFileFullPath, DATE_FORMAT, getFundType,
 } from './common'
 import createAjax from './ajax'
 
@@ -63,7 +63,7 @@ export async function syncData() {
 
   const startTime = Date.now()
 
-  const ft = (getCommandLineArgs()[0] || process.env.fundType || 'pg') as FundType
+  const ft = getFundType()
   const list = await getFundList({ requestParams: { ft } })
   log.title(`${ft}数据${list.length}条`)
 

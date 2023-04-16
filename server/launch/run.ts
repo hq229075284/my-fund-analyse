@@ -6,12 +6,12 @@ import { listFilter } from '@/config/process2'
 // import * as TTfetch from '@/api/tiantian/fetch'
 import * as ZSfetch from '@/api/zhaoshang/fetch'
 import { syncData } from '@/utils/pullData'
-import { getExecFileFullPath } from '@/utils/common'
+import { getExecFileFullPath, getFundType } from '@/utils/common'
 
 async function run() {
   const excel = createExcel()
 
-  const ft = (process.argv.slice(2)[0] || 'pg') as 'hh'|'zq'|'pg'|'gp'
+  const ft = getFundType()
   const startTime = Date.now()
   let list = await getFundList({ requestParams: { ft } })
   const { tiantian, zhaoshang } = await syncData()
@@ -33,7 +33,7 @@ async function run() {
   }
 
   if (ft !== 'zq') {
-    const valuation = await ZSfetch.valuationFetch(list.map((item) => item['基金编码']), { name: `${ft}估值`, verbose: true })
+    const valuation = await ZSfetch.valuationFetch(list.map((item) => item['基金编码']), { name: `${ft}估值` })
     list = list.filter((item) => valuation[item['基金编码']])
     log.info(`经估值过滤后，剩余${list.length}条`)
     if (list.length === 0) {

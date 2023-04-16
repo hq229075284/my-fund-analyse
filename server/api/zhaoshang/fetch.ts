@@ -14,15 +14,19 @@ import config from '@/config/zhaoshang'
 // import { getFundList } from '../tiantian/fundList'
 
 interface FetchOption{
-  name:string,
-  verbose:boolean
+  name?:string,
+  filter?:(...args:any[])=>any
 }
 
 export async function defaultFetch(fundCodes:string[], option?:FetchOption) {
   const result = await patch<IFormattedFundDetail>(
     fundCodes,
     getData,
-    config.default,
+    {
+      ...config.default,
+      filter: option?.filter ?? config.default.filter,
+    },
+
   )
 
   return result
@@ -32,7 +36,10 @@ export async function valuationFetch(fundCodes:string[], option?:FetchOption) {
   const result = await patch<IValuationItem[]>(
     fundCodes,
     getValuation,
-    config.valuation,
+    {
+      ...config.valuation,
+      name: option?.name ?? config.valuation.name,
+    },
   )
 
   return result

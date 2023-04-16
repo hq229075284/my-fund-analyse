@@ -10,14 +10,18 @@ import config from '@/config/tiantian'
 // import { getFundList } from './fundList'
 
 interface FetchOption{
-  name:string,
+  name?:string,
+  filter?:(...args:any[])=>any
 }
 
 export async function defaultFetch(fundCodes:string[], option?:FetchOption) {
   const result = await patch<IFormattedFundDetail>(
     fundCodes,
     getData,
-    config.default,
+    {
+      ...config.default,
+      filter: option?.filter ?? config.default.filter,
+    },
   )
 
   return result
