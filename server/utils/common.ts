@@ -87,7 +87,7 @@ export async function retry(
   return defaultValue
 }
 
-export const DATE_FORMAT = 'YYYY-MM-DD 21|00|00'
+export const DATE_FORMAT = 'YYYY-MM-DD 21,00,00'
 export function getDateStamp() {
   const now = dayjs()
   const format = DATE_FORMAT

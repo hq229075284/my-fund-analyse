@@ -52,6 +52,8 @@ async function uploadCache() {
       data: formData,
       timeout: 10 * 60 * 1000,
     })
+    log.debug(`上传成功=>${tiantianFileCachePath}`)
+    log.debug(`上传成功=>${zhaoshangFileCachePath}`)
     log.success('上传成功')
   } catch (e) {
     log.error(`上传失败=>${e.message}`)
