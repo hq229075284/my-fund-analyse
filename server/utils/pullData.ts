@@ -16,7 +16,7 @@ import createAjax from './ajax'
 
 export async function removeOutdateCacheFiles() {
   const timeStr = getDateStamp()
-  const today = dayjs(timeStr.replace(/\|/g, ':'))
+  const today = dayjs(timeStr.replace(/,/g, ':'))
   const retainDays = [] as string[]
   const lastDays = 3
   for (let i = lastDays - 1; i >= 0; i -= 1) {
