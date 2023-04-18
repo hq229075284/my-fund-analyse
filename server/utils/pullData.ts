@@ -60,16 +60,18 @@ async function uploadCache() {
   }
 }
 
-export async function syncData() {
+export async function syncData(fundCodes?:string[]) {
   await removeOutdateCacheFiles()
 
   const startTime = Date.now()
 
   const ft = getFundType()
-  const list = await getFundList({ requestParams: { ft } })
-  log.title(`${ft}数据${list.length}条`)
 
-  const fundCodes = list.map((item) => item['基金编码'])
+  if (!fundCodes) {
+    const list = await getFundList({ requestParams: { ft } })
+    log.title(`${ft}数据${list.length}条`)
+    fundCodes = list.map((item) => item['基金编码'])
+  }
 
   log.lineInfo('开始获取天天基金、招商数据')
   const [tiantian, zhaoshang] = await Promise.all([

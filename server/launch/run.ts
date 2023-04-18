@@ -14,7 +14,7 @@ async function run() {
   const ft = getFundType()
   const startTime = Date.now()
   let list = await getFundList({ requestParams: { ft } })
-  const { tiantian, zhaoshang } = await syncData()
+  const { tiantian, zhaoshang } = await syncData(list.map((item) => item['基金编码']))
   // log.success(`${ft}数据${list.length}条`)
 
   // const fundCodes = list.map((item) => item['基金编码'])
