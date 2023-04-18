@@ -114,9 +114,32 @@ function readResultFromFile(options:PersistenceLoaderOption) {
   return resultAfterFilter
 }
 
+async function tryReadCache(options:PersistenceLoaderOption|RemoteLoaderOption) {
+  if (fs.existsSync(options.filePath)) {
+    log.debug(`开始读取本地缓存=>${options.filePath}`)
+    try {
+      return readResultFromFile(options)
+    } catch {
+      log.error(`读取本地缓存失败=>${options.filePath}`)
+    }
+  }
+  if ('remoteFilePath' in options) {
+    log.debug(`开始读取远程缓存=>${options.remoteFilePath}`)
+    const downloadComplete = await readResultFromRemoteFile(options)
+    if (downloadComplete) {
+      log.debug(`开始读取本地缓存=>${options.filePath}`)
+      try {
+        return readResultFromFile(options)
+      } catch {
+        log.error(`读取本地缓存失败=>${options.filePath}`)
+      }
+    }
+  }
+}
+
 export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGetData, options:LoaderOption) {
   const delta = options.delta || 200
-  let resultAfterFilter = {} as Result<RT>
+  const resultAfterFilter = {} as Result<RT>
   let originResult = {} as Result<RT>
   let successCount = 0
   let failCount = 0
@@ -126,42 +149,60 @@ export async function patch<RT=unknown>(fundCodes:string[], fetchData:theWayOfGe
 
   if (withPersistence(options)) {
     mkdirp.sync(path.dirname(options.filePath))
-    if (!options.forceUpdate) { // 尝试读缓存
-      if (fs.existsSync(options.filePath)) {
-        log.debug(`开始读取本地缓存=>${options.filePath}`)
-        try {
-          resultAfterFilter = readResultFromFile(options) as Result<RT>
-          // log.success('本地缓存读取成功')
-          return resultAfterFilter
-        } catch {
-          log.error(`读取本地缓存失败=>${options.filePath}`)
+    if (options.forceUpdate) {
+      const maybeCache = await tryReadCache(options)
+      if (maybeCache) {
+        const response = await prompts([
+          {
+            type: 'text',
+            name: 'forceUpdate',
+            message: '是否抛弃缓存，重新读取源数据？(Y/n)',
+          },
+        ])
+        if (response.forceUpdate !== 'Y') {
+          return maybeCache as Result<RT>
         }
       }
-      if ('remoteFilePath' in options) {
-        log.debug(`开始读取远程缓存=>${options.remoteFilePath}`)
-        const downloadComplete = await readResultFromRemoteFile(options)
-        if (downloadComplete) {
-          log.debug(`开始读取本地缓存=>${options.filePath}`)
-          try {
-            resultAfterFilter = readResultFromFile(options) as Result<RT>
-            // log.success('本地缓存读取成功')
-            return resultAfterFilter
-          } catch {
-            log.error(`读取本地缓存失败=>${options.filePath}`)
-          }
-        }
-        // const response = await prompts([
-        //   {
-        //     type: 'text',
-        //     name: 'forceUpdate',
-        //     message: '是否抛弃缓存，重新读取源数据？(Y/n)',
-        //   },
-        // ])
-        // if (response.forceUpdate !== 'Y') {
-        //   return resultAfterFilter
-        // }
-        // log.info(`开始重新读取${options.name}源数据`)
+    } else { // 尝试读缓存
+      const maybeCache = await tryReadCache(options)
+      if (maybeCache) {
+        return maybeCache as Result<RT>
       }
+      // if (fs.existsSync(options.filePath)) {
+      //   log.debug(`开始读取本地缓存=>${options.filePath}`)
+      //   try {
+      //     resultAfterFilter = readResultFromFile(options) as Result<RT>
+      //     // log.success('本地缓存读取成功')
+      //     return resultAfterFilter
+      //   } catch {
+      //     log.error(`读取本地缓存失败=>${options.filePath}`)
+      //   }
+      // }
+      // if ('remoteFilePath' in options) {
+      //   log.debug(`开始读取远程缓存=>${options.remoteFilePath}`)
+      //   const downloadComplete = await readResultFromRemoteFile(options)
+      //   if (downloadComplete) {
+      //     log.debug(`开始读取本地缓存=>${options.filePath}`)
+      //     try {
+      //       resultAfterFilter = readResultFromFile(options) as Result<RT>
+      //       // log.success('本地缓存读取成功')
+      //       return resultAfterFilter
+      //     } catch {
+      //       log.error(`读取本地缓存失败=>${options.filePath}`)
+      //     }
+      //   }
+      //   // const response = await prompts([
+      //   //   {
+      //   //     type: 'text',
+      //   //     name: 'forceUpdate',
+      //   //     message: '是否抛弃缓存，重新读取源数据？(Y/n)',
+      //   //   },
+      //   // ])
+      //   // if (response.forceUpdate !== 'Y') {
+      //   //   return resultAfterFilter
+      //   // }
+      //   // log.info(`开始重新读取${options.name}源数据`)
+      // }
     }
 
     // 读源数据

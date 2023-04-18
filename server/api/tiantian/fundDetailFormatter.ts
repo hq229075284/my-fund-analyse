@@ -96,6 +96,7 @@ function baseInfoFormatter(detail:ResponseData) {
     近3月: { max: 0, min: 99, currentPercent: 0 },
     近6月: { max: 0, min: 99, currentPercent: 0 },
     近1年: { max: 0, min: 99, currentPercent: 0 },
+    成立以来: { max: 0, min: 99, currentPercent: 0 },
   }
 
   function getDateRange(value:number, unit:dayjs.ManipulateType) {
@@ -115,6 +116,7 @@ function baseInfoFormatter(detail:ResponseData) {
       近3月: [3, 'month'],
       近6月: [6, 'month'],
       近1年: [1, 'year'],
+      成立以来: [20, 'year'],
     }
     const { startDate, endDate } = getDateRange(...timeMap[key])
 

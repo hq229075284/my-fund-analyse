@@ -10,9 +10,9 @@ export function tiantianFilter(detail:tiantian_IFormattedFundDetail):boolean {
   // 排名过滤器
   const name:categories = '近1周'
   const condition1 = true
-  && detail.rankInfo[name]['排名'] <= 20
-  && detail.rankInfo[name]['总数'] >= 1000
-  // && detail.rankInfo[name]['涨跌幅'] > 0
+  // && detail.rankInfo[name]['排名'] <= 150
+  // && detail.rankInfo[name]['总数'] >= 1000
+  // && detail.rankInfo[name]['涨跌幅'] > 0.2
   // && detail.rankInfo['近1月']['涨跌幅'] > 1
   // && !!detail.rankInfo['近1月']['前百分之'] && detail.rankInfo['近1月']['前百分之'] <= 5
 
@@ -26,6 +26,7 @@ export function tiantianFilter(detail:tiantian_IFormattedFundDetail):boolean {
 
   // 形势过滤器
   const condition4 = true
+  && detail.baseInfo.maxAndMinInRange['近1年'].currentPercent <= 50
   // && detail.baseInfo.maxAndMinInRange['近1年'].currentPercent <= 90
   // && detail.baseInfo.maxAndMinInRange['近1年'].currentPercent > 0
   // && detail.baseInfo.maxAndMinInRange['近1年'].currentPercent <= 10
@@ -39,10 +40,11 @@ export function tiantianFilter(detail:tiantian_IFormattedFundDetail):boolean {
   //   : prev
   // ), 0) <= 3
   // && lastTenTrend.slice(-1).every(({ JZZZL }) => +JZZZL > 0.3 && +JZZZL < Math.abs(+lastTenTrend.slice(-2, -1)[0].JZZZL))// 昨天涨
+  && lastTenTrend.slice(-1).every(({ JZZZL }) => +JZZZL > 0.5)// 昨天涨
   // && lastTenTrend.slice(-1).every(({ JZZZL }) => +JZZZL < 0)// 昨天跌
   // && lastTenTrend.slice(-2, -1).some(({ JZZZL }) => +JZZZL < -1)// 最近n天有跌
-  // && lastTenTrend.slice(-1).every(({ JZZZL }) => +JZZZL < 0)// 最近连跌n天
-  && lastTenTrend.slice(-1).some(({ JZZZL }) => +JZZZL > 0)// 最近n天有涨过
+  && lastTenTrend.slice(-3, -1).every(({ JZZZL }) => +JZZZL < 0)// 最近连跌n天
+  // && lastTenTrend.slice(-5).some(({ JZZZL }) => +JZZZL > 0)// 最近n天有涨过
 
   return condition1 && condition2 && condition3 && condition4 && condition5
 }
