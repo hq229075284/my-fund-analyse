@@ -57,7 +57,7 @@ async function run() {
   writeToMd(list)
 }
 
-if (getExecFileFullPath().includes('launch/run')) {
+if (/launch\/run|launch\\run/.test(getExecFileFullPath())) {
   run()
 }
 

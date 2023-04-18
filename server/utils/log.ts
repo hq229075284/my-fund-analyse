@@ -30,8 +30,7 @@ class Log {
   }
 
   error(msg:string) {
-    // console.log(msg)
-    this.logToFile(msg)
+    this.logToFile(`[error]=>${msg}`)
     console.log(chalk.red(msg))
   }
 
