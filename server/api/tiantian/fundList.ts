@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { retry } from '@/utils/common'
 import log from '@/utils/log'
 
 export interface IRowOfFundList {
@@ -138,10 +139,10 @@ export async function filter({ requestParams = {}, limit = 100000 }:IFilterParam
     url: 'https://fundapi.eastmoney.com/fundtradenew.aspx',
     params: {
       ft: 'zq',
-      sc: '3y',
+      // sc: '3y',
       st: 'desc',
       pi: 1,
-      pn: 100000,
+      pn: 11500,
       cp: '',
       fr: '',
       plevel: '',
@@ -191,14 +192,28 @@ export async function filter({ requestParams = {}, limit = 100000 }:IFilterParam
 }
 
 export async function getFundList(...args:Parameters<typeof filter>) {
-  try {
-    const list = await filter(...args)
-    return list
-  } catch (e) {
-    log.error(e.message)
-    // if (e instanceof Error) {
-    // }
+  const message = await retry(
+    () => filter(...args),
+    {
+      tryId: '基金列表',
+      interval: 1000,
+      // interval: 1000 + Math.floor(1000 * Math.random()),
+      tryCount: 3,
+      defaultValue: [],
+    },
+  )
+  if (!message.length) {
     log.error('基金列表获取失败')
-    return []
   }
+  return message
+  // try {
+  //   const list = await filter(...args)
+  //   return list
+  // } catch (e) {
+  //   log.error(e.message)
+  //   // if (e instanceof Error) {
+  //   // }
+  //   log.error('基金列表获取失败')
+  //   return []
+  // }
 }

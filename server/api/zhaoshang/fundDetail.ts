@@ -1,5 +1,6 @@
 /* eslint-disable no-loop-func */
 import createAjax from '@/utils/ajax'
+import log from '@/utils/log'
 
 interface RedemptionResponseData{
   /**
@@ -67,25 +68,27 @@ export async function getTransactionRate(fundid:string) {
   return redemptionData
 }
 
-export async function getValuationByFundId(fundid:string) {
+export async function getValuationByFundId(fundId:string) {
   const valuation:IValuationItem[] = await createAjax({
     url: 'https://xtrade.newone.com.cn/lc/api/getData',
     method: 'post',
     params: {
       method: 'queryjzycv4',
-      fundid,
+      fundid: fundId,
     },
   }).then((response) => {
     let { xAxis, yyseries } = response.data.content
+    const result = [] as IValuationItem[]
+    // @ts-ignore 添加基金标识，用于debug
+    result.fundId = fundId
     if (xAxis && yyseries) {
       xAxis = xAxis.slice(0, 30)
       yyseries = yyseries[1].data.slice(0, 30)
-      return xAxis.reduce((prev, x, i) => {
-        prev.push({ x, y: yyseries[i] })
-        return prev
-      }, [])
+      xAxis.forEach((x, i) => {
+        result.push({ x, y: yyseries[i] })
+      })
     }
-    return []
+    return result
   })
 
   return valuation
@@ -114,6 +117,7 @@ export async function getValuation(fundCode:string) {
   const fundId = await getFundId(fundCode)
 
   if (!fundId) {
+    log.error(`获取${fundCode}的fundid失败`)
     return []
   }
 
